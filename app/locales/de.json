@@ -1,5 +1,8 @@
 {
+    "traffic": { "title": "TruckersMP-Verkehr (geschätzt)", "description": "Schätzt Routenabschnitte mit mehreren kaum fahrenden Fahrzeugen. Standort und Route werden nicht gesendet.", "choose": "Server laden", "off": "Aus", "waiting": "Fahrzeuge werden beobachtet. Dies kann eine Minute dauern.", "ready": "Verkehrsschätzung ist aktiv.", "unavailable": "Verkehrsdaten sind nicht verfügbar." },
+    "trafficUnsupported": "Nur mit der Standardkarte von ETS2 verfügbar.",
     "common": {
+        "back": "Zurück",
         "active": "Aktiv",
         "chooseDlcs": "DLCs auswählen",
         "connect": "Verbinden",
@@ -155,6 +158,26 @@
         "follow": "Follow truck",
         "tap": "Tap map to set route"
     },
+    "routeUi": {
+        "arriving": "Ankunft",
+        "endGuidance": "Navigation beenden",
+        "currentLocation": "Aktueller Standort",
+        "destination": "Ziel",
+        "trafficOnRoute": "Geschätzte Staus auf der Route",
+        "routeOption": "Route",
+        "gameRouteEstimate": "Spielroute",
+        "routePreview": "Routenvorschau",
+        "cancelRoute": "Route abbrechen",
+        "navigationMenu": "Navigationsmenü",
+        "openMenu": "Navigationsmenü öffnen",
+        "closeMenu": "Menü schließen",
+        "cancelAuto": "Automatischen Start abbrechen",
+        "autoStart": "Start in {seconds} Sek.",
+        "arrivalGame": "Ankunft im Spiel",
+        "arrivalReal": "Voraussichtliche Ankunft",
+        "remaining": "verbleibend",
+        "progress": "Routenfortschritt"
+    },
     "directions": {
         "depart": "Head on route",
         "straight": "Continue straight",
@@ -168,6 +191,7 @@
         "roundabout": "Exit at the roundabout",
         "destination": "Arrived",
         "exit-highway": "Take the exit",
-        "roundaboutExit": "Roundabout exit {exit}"
+        "roundaboutExit": "Roundabout exit {exit}",
+        "roundaboutClock": "Roundabout exit at {clock} o’clock"
     }
 }

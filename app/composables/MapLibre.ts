@@ -1,3 +1,4 @@
+import { mapFontFamily } from "~/utils/mapFontFamily";
 import { applyMapTheme } from "~/utils/mapTheme";
 import type { Map as MapLibreGl, StyleSpecification } from "maplibre-gl";
 import {
@@ -351,7 +352,7 @@ export async function initializeMap(
             layout: {
                 "text-field": ["get", "name"],
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-size": 13,
                 "text-anchor": "center",
@@ -450,7 +451,7 @@ export async function initializeMap(
             layout: {
                 "text-field": ["get", "name"],
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-size": 15,
                 "text-anchor": "bottom",
@@ -479,7 +480,7 @@ export async function initializeMap(
                 "text-field": ["get", "name"],
                 "text-size": 18,
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-anchor": "bottom",
                 "text-offset": [0, -0.3],
@@ -505,7 +506,7 @@ export async function initializeMap(
                 "text-field": ["get", "name"],
                 "text-size": 20,
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-anchor": "bottom",
                 "text-offset": [0, -0.3],

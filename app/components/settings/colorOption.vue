@@ -36,6 +36,7 @@ function resetColor() {
             <UPopover>
                 <UButton
                     class="change-color-btn nav-btn settings-btn"
+                    :aria-label="optionTitle"
                     :style="{ backgroundColor: currentColor }"
                 >
                     <template #leading>

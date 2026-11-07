@@ -19,6 +19,8 @@ const items = ref([
     "Nunito",
     "Karla",
     "Commissioner",
+    "KakaoBigFont",
+    "KakaoSmallFont",
 ]);
 
 async function updatePreviewIcon() {
@@ -42,6 +44,7 @@ watch(() => activeSettings.value.themeColor, updatePreviewIcon, {
 <template>
     <div>
         <ThemeControls />
+        <TrafficControls />
         <ColorOption
             :option-title="t('settings.theme')"
             color-element="themeColor"

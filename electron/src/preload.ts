@@ -9,6 +9,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
     getLocalIP: () => ipcRenderer.invoke("get-local-ip"),
     getLocalPort: () => ipcRenderer.invoke("get-local-port"),
+    getTruckersMpServers: () => ipcRenderer.invoke("tmp-traffic-servers"),
+    getTruckersMpSnapshot: (serverId: number) => ipcRenderer.invoke("tmp-traffic-snapshot", serverId),
+    getTmpNearby: () => ipcRenderer.invoke("tmp-nearby-read"),
+    stopTmpNearby: () => ipcRenderer.invoke("tmp-nearby-stop"),
+    getGameRoute: () => ipcRenderer.invoke("game-route-read"),
+    stopGameRoute: () => ipcRenderer.invoke("game-route-stop"),
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
     selectGameFolder: (gameName: string) =>
         ipcRenderer.invoke("select-game-folder", gameName),

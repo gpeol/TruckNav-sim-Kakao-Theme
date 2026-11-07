@@ -52,3 +52,13 @@ test('legacy settings retain locale, units, DLCs and custom colors', async ({pag
     expect(saved.profiles.ats).toMatchObject({units:'imperial',roadColor:'#123456',ownedDlcs:[1,3],activeMod:'reforma'});
     expect(saved.themeClock).toBe('device');
 });
+
+test('the theme accent follows the stylesheet after settings changes', async ({page}) => {
+    await page.route('**/api/map-status/**', route => route.fulfill({json:{downloaded:false}}));
+    await page.goto('/');
+    await page.addStyleTag({content: ':root { --theme-color: #123456; }'});
+    const accent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim());
+    await expect.poll(accent).toBe('#123456');
+    await page.getByRole('button', {name:'주간', exact:true}).click();
+    await expect.poll(accent).toBe('#123456');
+});

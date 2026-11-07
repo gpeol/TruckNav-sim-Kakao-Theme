@@ -1,3 +1,4 @@
+import { isSecurePreviewDocument, telemetrySocketUrl } from "~/utils/previewTransport";
 import { Capacitor } from "@capacitor/core";
 import {
     getGameState,
@@ -50,6 +51,7 @@ let lastPosition: [number, number] | null = null;
 let headingOffset = 0;
 
 let socket: WebSocket | null = null;
+const rawTelemetry = shallowRef<TelemetryPacket | null>(null);
 
 function sendDiscordRpcState(payload: {
     game: string;
@@ -89,10 +91,10 @@ export function useEtsTelemetry() {
     function startTelemetry(onUpdate?: (data: TelemetryUpdate) => void) {
         if (socket) return;
 
-        const ip = isCapacitor
-            ? settings.value.savedIP
-            : window.location.hostname;
-        const url = `ws://${ip}:30001`;
+        const url = telemetrySocketUrl(
+            window.location.hostname, settings.value.savedIP, isCapacitor,
+            isSecurePreviewDocument(), window.location.protocol, window.location.host,
+        );
 
         socket = new WebSocket(url);
 
@@ -112,6 +114,7 @@ export function useEtsTelemetry() {
                 }
 
                 if (data) {
+                    rawTelemetry.value = data;
                     processData(data, onUpdate);
                 }
             } catch (e) {
@@ -132,6 +135,7 @@ export function useEtsTelemetry() {
             socket.close();
             socket = null;
         }
+        rawTelemetry.value = null;
     }
 
     function processData(
@@ -221,6 +225,7 @@ export function useEtsTelemetry() {
         onUpdate?: (data: TelemetryUpdate) => void,
     ) {
         const wasConnected = gameState.gameConnected;
+        rawTelemetry.value = null;
         headingOffset = 0;
         lastPosition = null;
         speedSamples = [];
@@ -266,6 +271,7 @@ export function useEtsTelemetry() {
         ...toRefs(truckState),
         ...toRefs(gameState),
         ...toRefs(jobState),
+        rawTelemetry,
         startTelemetry,
         stopTelemetry,
     };

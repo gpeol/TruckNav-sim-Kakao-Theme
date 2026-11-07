@@ -1,5 +1,8 @@
 {
+    "traffic": { "title": "TruckersMP 교통량 (추정)", "description": "선택한 서버에서 여러 차량의 이동이 거의 없는 경로 구간을 추정합니다. 내 위치와 경로는 전송하지 않습니다.", "choose": "서버 목록 불러오기", "off": "사용 안 함", "waiting": "차량 움직임을 관측하는 중입니다. 최대 1분이 걸릴 수 있습니다.", "ready": "교통량 추정이 켜져 있습니다.", "unavailable": "교통량 정보를 가져오지 못했습니다." },
+    "trafficUnsupported": "기본 ETS2 지도에서만 사용할 수 있습니다.",
     "common": {
+        "back": "뒤로",
         "active": "활성화",
         "chooseDlcs": "DLC 선택",
         "connect": "연결하기",
@@ -53,7 +56,7 @@
         "placeholder": "여기에 입력..."
     },
     "map": {
-        "externalRouteDetected": "외부 경로 감지: 경로 업데이트",
+        "externalRouteDetected": "외부 경로 감지됨: 경로 업데이트",
         "followRoute": "경로 따라가기",
         "tappingDisabled": "터치 비활성화",
         "tappingEnabled": "터치 활성화",
@@ -63,7 +66,7 @@
         "pairWithComputer": "컴퓨터와 연결"
     },
     "notifications": {
-        "locatingRoute": "경로 탐색 중",
+        "locatingRoute": "경로",
         "noRouteAvailable": "사용 가능한 경로가 없음",
         "routeFound": "경로 탐색"
     },
@@ -155,19 +158,40 @@
         "follow": "트럭 위치 따라가기",
         "tap": "지도 탭으로 경로 지정"
     },
+    "routeUi": {
+        "arriving": "목적지 도착 중",
+        "endGuidance": "안내 종료",
+        "currentLocation": "현재 위치",
+        "destination": "목적지",
+        "trafficOnRoute": "경로에 추정 혼잡 구간 있음",
+        "routeOption": "안내 경로",
+        "gameRouteEstimate": "게임 경로",
+        "routePreview": "경로 미리보기",
+        "cancelRoute": "경로 취소",
+        "navigationMenu": "안내 메뉴",
+        "openMenu": "안내 메뉴 열기",
+        "closeMenu": "메뉴 닫기",
+        "cancelAuto": "자동 시작 취소",
+        "autoStart": "{seconds}초 후 자동 시작",
+        "arrivalGame": "게임 예상 도착",
+        "arrivalReal": "실제 예상 도착",
+        "remaining": "남음",
+        "progress": "경로 진행률"
+    },
     "directions": {
         "depart": "경로를 따라 출발하세요",
-        "straight": "계속 직진하세요",
-        "left": "좌회전하세요",
-        "right": "우회전하세요",
-        "slight-left": "왼쪽 방향으로 진행하세요",
-        "slight-right": "오른쪽 방향으로 진행하세요",
-        "sharp-left": "크게 좌회전하세요",
-        "sharp-right": "크게 우회전하세요",
+        "straight": "계속 직진",
+        "left": "좌회전",
+        "right": "우회전",
+        "slight-left": "왼쪽 방향",
+        "slight-right": "오른쪽 방향",
+        "sharp-left": "크게 좌회전",
+        "sharp-right": "크게 우회전",
         "ferry": "페리를 이용하세요",
         "roundabout": "회전교차로에서 나가세요",
-        "destination": "목적지에 도착했습니다",
+        "destination": "목적지에 도착했습니다. 안내를 종료합니다.",
         "exit-highway": "출구로 나가세요",
-        "roundaboutExit": "회전교차로 {exit}번째 출구"
+        "roundaboutExit": "회전교차로 {exit}번째 출구",
+        "roundaboutClock": "회전교차로 {clock}시 방향 출구"
     }
 }

@@ -1,5 +1,8 @@
 {
+    "traffic": { "title": "Premávka TruckersMP (odhad)", "description": "Odhaduje úseky trasy s viacerými takmer stojacimi vozidlami. Vaša poloha ani trasa sa neodosiela.", "choose": "Načítať servery", "off": "Vypnuté", "waiting": "Sleduje sa pohyb vozidiel. Môže to trvať minútu.", "ready": "Odhad premávky je zapnutý.", "unavailable": "Dopravné údaje nie sú dostupné." },
+    "trafficUnsupported": "Dostupné iba so štandardnou mapou ETS2.",
     "common": {
+        "back": "Späť",
         "active": "Aktívne",
         "chooseDlcs": "Vyber DLC",
         "connect": "Pripojiť",
@@ -155,6 +158,26 @@
         "follow": "Follow truck",
         "tap": "Tap map to set route"
     },
+    "routeUi": {
+        "arriving": "Príchod",
+        "endGuidance": "Ukončiť navigáciu",
+        "currentLocation": "Aktuálna poloha",
+        "destination": "Cieľ",
+        "trafficOnRoute": "Odhadované zdržanie na trase",
+        "routeOption": "Trasa",
+        "gameRouteEstimate": "Trasa v hre",
+        "routePreview": "Náhľad trasy",
+        "cancelRoute": "Zrušiť trasu",
+        "navigationMenu": "Ponuka navigácie",
+        "openMenu": "Otvoriť ponuku navigácie",
+        "closeMenu": "Zavrieť ponuku",
+        "cancelAuto": "Zrušiť automatické spustenie",
+        "autoStart": "Spustenie o {seconds} s",
+        "arrivalGame": "Príchod v hre",
+        "arrivalReal": "Odhadovaný príchod",
+        "remaining": "zostáva",
+        "progress": "Priebeh trasy"
+    },
     "directions": {
         "depart": "Head on route",
         "straight": "Continue straight",
@@ -168,6 +191,7 @@
         "roundabout": "Exit at the roundabout",
         "destination": "Arrived",
         "exit-highway": "Take the exit",
-        "roundaboutExit": "Roundabout exit {exit}"
+        "roundaboutExit": "Roundabout exit {exit}",
+        "roundaboutClock": "Roundabout exit at {clock} o’clock"
     }
 }

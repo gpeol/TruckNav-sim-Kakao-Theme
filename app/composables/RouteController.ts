@@ -1,3 +1,6 @@
+import { routeProgress as calculateRouteProgress } from "~/utils/routeProgress";
+import { matchGameRouteNodes } from "~/utils/matchGameRoute";
+import { convertEts2ToGeo, convertGeoToEts2 } from "~/assets/utils/map/converters";
 import maplibregl from "maplibre-gl";
 import { generateDestinationIcon } from "~/assets/utils/map/markers";
 import {
@@ -25,6 +28,7 @@ export const useRouteController = (
     adjacency: Map<number, any>,
     nodeCoords: Map<number, [number, number]>,
     stopNavigationMode: () => void,
+    gameRouteOwned: Ref<boolean>,
 ) => {
     const { getGameLocationName, getWorkerCityData, mapScaleConfig } =
         useCityData();
@@ -49,9 +53,11 @@ export const useRouteController = (
     const lastMathPos = ref<[number, number] | null>(null);
 
     const isCalculating = ref(false);
+    let routeRequestRevision = 0;
     const routeFound = ref<boolean | null>(null);
 
     const currentRouteIndex = ref(0);
+    const routeProgress = computed(() => calculateRouteProgress(routeStatsCache.value, currentRoutePath.value?.length ?? 0, currentRouteIndex.value));
     const isWorkerReady = ref(false);
 
     const fullRouteDirections = ref<DirectionStep[]>([]);
@@ -204,6 +210,8 @@ export const useRouteController = (
         truckHeading: number,
         sdkScale: number,
         avgSpeed: number,
+        persistDestination = true,
+        gamePoints?: [number, number, number][],
     ) {
         if (
             waypointList.value.length === 0 ||
@@ -215,21 +223,58 @@ export const useRouteController = (
         }
 
         isCalculating.value = true;
+        const requestRevision = ++routeRequestRevision;
         routeFound.value = null;
 
         try {
-            const startConfig = findBestStartConfiguration(
+            const startConfig = gamePoints ? null : findBestStartConfiguration(
                 truckCoords,
                 truckHeading,
                 50,
             );
-            if (!startConfig) {
+            if (!startConfig && !gamePoints) {
                 isCalculating.value = false;
                 return;
             }
 
-            isYardStart.value = startConfig.type === "yard";
-            startNodeId.value = startConfig.toId;
+            isYardStart.value = startConfig?.type === "yard";
+            startNodeId.value = startConfig?.toId ?? null;
+
+            let gameNodes: number[] | undefined;
+            let gameStopNodes: number[] | undefined;
+            if (gamePoints) {
+                const groups = gamePoints.map(([x, z]) => {
+                    const geo = convertEts2ToGeo(x, z);
+                    return getClosestNodes(geo, 64, 0.015).flatMap(id => {
+                        const coords = nodeCoords.get(id);
+                        if (!coords) return [];
+                        const [nx, nz] = convertGeoToEts2(...coords);
+                        const distance = Math.hypot(nx - x, nz - z);
+                        return distance <= 40 ? [{ id, distance }] : [];
+                    });
+                });
+                gameNodes = matchGameRouteNodes(groups, adjacency) ?? undefined;
+                if (!gameNodes) {
+                    routeFound.value = false;
+                    isRouteActive.value = false;
+                    return;
+                }
+                let previousStop = -1;
+                gameStopNodes = waypointList.value.map((stop, stopIndex) => {
+                    const [x, z] = convertGeoToEts2(...stop);
+                    const index = stopIndex === waypointList.value.length - 1
+                        ? gamePoints.length - 1
+                        : gamePoints.findIndex((point, i) => i > previousStop && Math.hypot(point[0] - x, point[1] - z) < 0.01);
+                    previousStop = index;
+                    return gameNodes![index]!;
+                });
+                if (gameStopNodes.some(id => id === undefined)) {
+                    routeFound.value = false;
+                    isRouteActive.value = false;
+                    return;
+                }
+                startNodeId.value = gameNodes[0]!;
+            }
 
             const waypointsNodeGroups: number[][] = [];
             for (const waypoint of waypointList.value) {
@@ -252,11 +297,15 @@ export const useRouteController = (
                 waypointList.value,
                 waypointsNodeGroups,
                 truckHeading,
-                startConfig.type as "road" | "yard",
+                (startConfig?.type ?? "road") as "road" | "yard",
                 userDlcs,
                 sdkScale,
                 avgSpeed,
+                gameNodes,
+                gameStopNodes,
             );
+
+            if (requestRevision !== routeRequestRevision) return;
 
             if (result) {
                 isRouteActive.value = true;
@@ -293,6 +342,7 @@ export const useRouteController = (
                     result.sequenceManeuvers,
                     result.sequenceExits,
                     nodeCoords,
+                    result.sequenceRoundaboutClocks,
                 );
 
                 if (fullRouteDirections.value.length > 1) {
@@ -303,7 +353,7 @@ export const useRouteController = (
                     ) {
                         nextTurnDistance.value = Math.max(
                             0,
-                            +upcomingTurn.cumulativeKm.toFixed(1),
+                            upcomingTurn.cumulativeKm,
                         );
                     }
                 } else {
@@ -319,10 +369,13 @@ export const useRouteController = (
 
                 routeFound.value = true;
                 currentRouteIndex.value = 0;
-                updateProfile(
-                    "lastDestination",
-                    waypointList.value[waypointList.value.length - 1]!,
-                );
+                lastMathPos.value = null;
+                if (persistDestination) {
+                    updateProfile(
+                        "lastDestination",
+                        waypointList.value[waypointList.value.length - 1]!,
+                    );
+                }
             } else {
                 routeFound.value = false;
             }
@@ -343,6 +396,8 @@ export const useRouteController = (
         ownedDlcs: number[],
         sdkScale: number,
         avgSpeed: number,
+        gameNodes?: number[],
+        gameStopNodes?: number[],
     ): Promise<any> {
         return new Promise((resolve) => {
             if (!worker) {
@@ -380,6 +435,8 @@ export const useRouteController = (
                     selectedGame: settings.value.selectedGame,
                     sdkScale: Number(sdkScale),
                     avgSpeed: Number(avgSpeed),
+                    gameNodes,
+                    gameStopNodes,
                 },
             });
         });
@@ -455,6 +512,7 @@ export const useRouteController = (
         sdkScale: number,
         createEndMarker: boolean,
         avgSpeed: number,
+        persistDestination = true,
     ) {
         waypointList.value = [clickCoords];
         await handleMultiRouteCalculation(
@@ -462,6 +520,7 @@ export const useRouteController = (
             truckHeading,
             sdkScale,
             avgSpeed,
+            persistDestination,
         );
     }
 
@@ -1096,9 +1155,7 @@ export const useRouteController = (
 
             if (upcomingTurn && upcomingTurn.cumulativeKm !== undefined) {
                 const distKm = upcomingTurn.cumulativeKm - currentKm;
-                const distRounded = +distKm.toFixed(1);
-
-                nextTurnDistance.value = Math.max(0, distRounded);
+                nextTurnDistance.value = Math.max(0, distKm);
 
                 const targetExitKm =
                     upcomingTurn.exitCumulativeKm !== undefined
@@ -1140,7 +1197,7 @@ export const useRouteController = (
             }
         }
 
-        if (minSqDist > activeThreshold) {
+        if (minSqDist > activeThreshold && !gameRouteOwned.value) {
             if (!isCalculating.value && waypointList.value.length > 0) {
                 lastRecalcTime.value = now;
                 console.log("Deviation detected! Recalculating...");
@@ -1155,7 +1212,8 @@ export const useRouteController = (
         }
     };
 
-    function clearRouteState() {
+    function clearRouteState(preserveSavedDestination = false) {
+        routeRequestRevision++;
         if (!map.value) return;
 
         deleteMapLibreData(map.value, "route-line");
@@ -1171,7 +1229,7 @@ export const useRouteController = (
         snappedWaypointNodeIds.value = [];
         isYardStart.value = false;
         fullRouteDirections.value = [];
-        updateProfile("lastDestination", null);
+        if (!preserveSavedDestination) updateProfile("lastDestination", null);
         stopNavigationMode();
 
         nextTurnDistance.value = 0;
@@ -1186,6 +1244,9 @@ export const useRouteController = (
         isCalculating,
         routeFound,
         currentRoutePath,
+        currentRouteIndex,
+        routeProgress,
+        routeStatsCache,
         isWorkerReady,
         isRouteActive,
         fullRouteDirections,

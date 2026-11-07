@@ -1,5 +1,8 @@
 {
+    "traffic": { "title": "TruckersMP-verkeer (schatting)", "description": "Schat routes waar meerdere voertuigen nauwelijks bewegen. Je locatie en route worden niet verzonden.", "choose": "Servers laden", "off": "Uit", "waiting": "Voertuigen worden gevolgd. Dit kan een minuut duren.", "ready": "Verkeersschatting staat aan.", "unavailable": "Verkeersgegevens zijn niet beschikbaar." },
+    "trafficUnsupported": "Alleen beschikbaar met de standaard ETS2-kaart.",
     "common": {
+        "back": "Terug",
         "active": "Actief",
         "chooseDlcs": "Kies DLC's",
         "connect": "Verbinden",
@@ -155,6 +158,26 @@
         "follow": "Follow truck",
         "tap": "Tap map to set route"
     },
+    "routeUi": {
+        "arriving": "Aankomst",
+        "endGuidance": "Navigatie beëindigen",
+        "currentLocation": "Huidige locatie",
+        "destination": "Bestemming",
+        "trafficOnRoute": "Geschatte drukte op de route",
+        "routeOption": "Route",
+        "gameRouteEstimate": "Spelroute",
+        "routePreview": "Routevoorbeeld",
+        "cancelRoute": "Route annuleren",
+        "navigationMenu": "Navigatiemenu",
+        "openMenu": "Navigatiemenu openen",
+        "closeMenu": "Menu sluiten",
+        "cancelAuto": "Automatisch starten annuleren",
+        "autoStart": "Start over {seconds} sec.",
+        "arrivalGame": "Aankomst in het spel",
+        "arrivalReal": "Verwachte aankomst",
+        "remaining": "resterend",
+        "progress": "Routevoortgang"
+    },
     "directions": {
         "depart": "Head on route",
         "straight": "Continue straight",
@@ -168,6 +191,7 @@
         "roundabout": "Exit at the roundabout",
         "destination": "Arrived",
         "exit-highway": "Take the exit",
-        "roundaboutExit": "Roundabout exit {exit}"
+        "roundaboutExit": "Roundabout exit {exit}",
+        "roundaboutClock": "Roundabout exit at {clock} o’clock"
     }
 }

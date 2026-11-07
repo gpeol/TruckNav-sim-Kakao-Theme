@@ -10,6 +10,6 @@ export function resolveTheme(mode: ThemeMode, clock: ThemeClock, deviceHour: num
 }
 
 export const mapThemes = {
-    day: { backgroundColor: "#c5e5f1", landColor: "#f2f0e7", roadColor: "#ffffff", text: "#29313c", halo: "#ffffff", border: "#a8b5bd", zone: "#d9dfce", prefab: "#e7dba8" },
-    night: { backgroundColor: "#101c2b", landColor: "#202b36", roadColor: "#566575", text: "#edf2f7", halo: "#202b36", border: "#405162", zone: "#2b3945", prefab: "#4c4935" },
+    day: { backgroundColor: "#a9cdea", landColor: "#e7e8e7", roadColor: "#ffffff", text: "#29313c", halo: "#ffffff", border: "#a8b5bd", zone: "#d9dfce", prefab: "#e7dba8" },
+    night: { backgroundColor: "#263e49", landColor: "#343943", roadColor: "#5b6069", text: "#edf2f7", halo: "#202b36", border: "#405162", zone: "#2b3945", prefab: "#4c4935" },
 } as const;

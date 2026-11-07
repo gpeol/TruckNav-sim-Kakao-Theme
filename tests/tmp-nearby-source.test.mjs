@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
+import { createTmpNearbySource } from '../scripts/tmp-nearby-source.mjs';
+
+test('nearby source validates snapshots and expires or clears stale positions', () => {
+    let time = 10000;
+    const child = new EventEmitter();
+    child.stdout = new PassThrough();
+    child.kill = () => { child.killed = true; };
+    const source = createTmpNearbySource({ spawnFn: () => child, now: () => time });
+    const unavailable = { state: 'unavailable', vehicles: [] };
+    assert.deepEqual(source.get(), unavailable);
+    child.stdout.write('{"state":"active","vehicles":[[1,2]]}\n');
+    assert.deepEqual(source.get(), { state: 'active', vehicles: [[1, 2]] });
+    time += 2000;
+    assert.deepEqual(source.get(), unavailable);
+    child.stdout.write('{"state":"inactive","vehicles":[]}\n');
+    assert.deepEqual(source.get(), { state: 'inactive', vehicles: [] });
+    child.stdout.write('{"state":"active","vehicles":[[1,100001]]}\n');
+    assert.deepEqual(source.get(), unavailable);
+    child.stdout.write('{"state":"inactive","vehicles":[[1,2]]}\n');
+    assert.deepEqual(source.get(), unavailable);
+    child.stdout.write('{"state":"active","vehicles":[[1,2]]}\n');
+    child.emit('exit');
+    assert.deepEqual(source.get(), unavailable);
+    source.stop();
+    assert.equal(child.killed, true);
+});

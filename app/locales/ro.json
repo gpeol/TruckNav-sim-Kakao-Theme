@@ -1,5 +1,8 @@
 {
+    "traffic": { "title": "Trafic TruckersMP (estimare)", "description": "Estimează porțiunile traseului unde mai multe vehicule aproape nu se mișcă. Locația și traseul nu sunt trimise.", "choose": "Încarcă serverele", "off": "Dezactivat", "waiting": "Se observă mișcarea vehiculelor. Poate dura un minut.", "ready": "Estimarea traficului este activă.", "unavailable": "Datele de trafic nu sunt disponibile." },
+    "trafficUnsupported": "Disponibil doar cu harta standard ETS2.",
     "common": {
+        "back": "Înapoi",
         "active": "Activ",
         "chooseDlcs": "Alege DLC-uri",
         "connect": "Conectează-te",
@@ -155,6 +158,26 @@
         "follow": "Follow truck",
         "tap": "Tap map to set route"
     },
+    "routeUi": {
+        "arriving": "Sosire",
+        "endGuidance": "Încheie navigația",
+        "currentLocation": "Locația curentă",
+        "destination": "Destinație",
+        "trafficOnRoute": "Aglomerație estimată pe traseu",
+        "routeOption": "Traseu",
+        "gameRouteEstimate": "Ruta din joc",
+        "routePreview": "Previzualizare traseu",
+        "cancelRoute": "Anulează traseul",
+        "navigationMenu": "Meniu navigație",
+        "openMenu": "Deschide meniul de navigație",
+        "closeMenu": "Închide meniul",
+        "cancelAuto": "Anulează pornirea automată",
+        "autoStart": "Pornire în {seconds} sec.",
+        "arrivalGame": "Sosire în joc",
+        "arrivalReal": "Sosire estimată",
+        "remaining": "rămase",
+        "progress": "Progresul traseului"
+    },
     "directions": {
         "depart": "Head on route",
         "straight": "Continue straight",
@@ -168,6 +191,7 @@
         "roundabout": "Exit at the roundabout",
         "destination": "Arrived",
         "exit-highway": "Take the exit",
-        "roundaboutExit": "Roundabout exit {exit}"
+        "roundaboutExit": "Roundabout exit {exit}",
+        "roundaboutClock": "Roundabout exit at {clock} o’clock"
     }
 }

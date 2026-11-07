@@ -45,12 +45,13 @@ export interface AppSettingsState {
     themeMode: ThemeMode;
     themeClock: ThemeClock;
     customMapColors: boolean;
+    trafficServerId: number | null;
 }
 
 const DEFAULT_PROFILE: GameProfile = {
-    themeColor: "#fbc02d",
+    themeColor: "#2988ff",
     textColor: "light",
-    routeColor: "#ffcc00",
+    routeColor: "#6aa1ff",
     roadColor: "#4a5f7a",
     backgroundColor: "#24467b",
     landColor: "#272d39",
@@ -94,6 +95,7 @@ const DEFAULT_SETTINGS: AppSettingsState = {
     themeMode: "auto",
     themeClock: "device",
     customMapColors: false,
+    trafficServerId: null,
     routeTimeMode: "game",
 };
 
@@ -110,11 +112,6 @@ export const useSettings = () => {
     });
 
     const applySideEffects = () => {
-        document.documentElement.style.setProperty(
-            "--theme-color",
-            "#ffdc00",
-        );
-
         document.documentElement.style.setProperty(
             "--main-text-color",
             "#20242b",
