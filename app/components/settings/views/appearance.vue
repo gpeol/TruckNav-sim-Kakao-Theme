@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { generateTruckIcon } from "~/assets/utils/map/markers";
-import SegmentedControl from "../segmentedControl.vue";
 
 const { settings, activeSettings, updateProfile, DEFAULT_SETTINGS } =
     useSettings();
@@ -8,10 +7,6 @@ const { t } = useTranslations();
 
 const truckImgSrc = ref("");
 const isDriveInfoOpened = ref(false);
-
-const isTextThemeLight = computed(
-    () => activeSettings.value.textColor === "light",
-);
 
 const items = ref([
     "Quicksand",
@@ -31,10 +26,6 @@ async function updatePreviewIcon() {
     truckImgSrc.value = img.src;
 }
 
-function toggleTextColor() {
-    updateProfile("textColor", isTextThemeLight.value ? "dark" : "light");
-}
-
 function updateFont(val: string) {
     updateProfile("fontFamily", val);
 }
@@ -50,6 +41,7 @@ watch(() => activeSettings.value.themeColor, updatePreviewIcon, {
 
 <template>
     <div>
+        <ThemeControls />
         <ColorOption
             :option-title="t('settings.theme')"
             color-element="themeColor"
@@ -105,22 +97,6 @@ watch(() => activeSettings.value.themeColor, updatePreviewIcon, {
 
         <div class="option setting">
             <div class="option-title">
-                <Icon name="lucide:type-outline" size="24" />
-                <p>{{ t("settings.textTheme") }}</p>
-            </div>
-
-            <SegmentedControl
-                :left-option="t('settings.light')"
-                :right-option="t('settings.dark')"
-                :is-same-color="true"
-                @connect="toggleTextColor"
-                :active="isTextThemeLight"
-                size="normal"
-            />
-        </div>
-
-        <div class="option setting">
-            <div class="option-title">
                 <Icon name="lucide:type" size="24" />
                 <p>{{ t("settings.appFont") }}</p>
             </div>
@@ -132,10 +108,10 @@ watch(() => activeSettings.value.themeColor, updatePreviewIcon, {
                 variant="none"
                 class="selector"
                 :ui="{
-                    trailingIcon: 'shrink-0 size-[20px] text-white !px-6',
-                    content: 'bg-[#222e3c] shadow-xl rounded-md',
-                    item: 'flex items-center justify-between text-[1.6rem] font-BOLD !py-2 !px-3 text-[#f2f2f2] data-[highlighted]:bg-[#3d546e] rounded cursor-pointer transition-colors',
-                    itemTrailingIcon: 'text-white',
+                    trailingIcon: 'shrink-0 size-[20px] text-[var(--text-primary)] !px-6',
+                    content: 'bg-[var(--surface-raised)] shadow-xl rounded-md',
+                    item: 'flex items-center justify-between text-[1.6rem] font-BOLD !py-2 !px-3 text-[var(--text-primary)] data-[highlighted]:bg-[var(--surface-muted)] rounded cursor-pointer transition-colors',
+                    itemTrailingIcon: 'text-[var(--text-primary)]',
                 }"
             >
                 <template #item="{ item }">

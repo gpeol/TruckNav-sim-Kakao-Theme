@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import type { DirectionStep } from "~/assets/utils/routing/directions";
 
-const { activeSettings } = useSettings();
-
 const props = defineProps<{
     upcomingTurns: DirectionStep[];
     distanceToNextTurn: number;
@@ -10,6 +8,14 @@ const props = defineProps<{
     active?: boolean;
     exit?: number | undefined;
 }>();
+
+const { t } = useTranslations();
+const instruction = computed(() => {
+    const turn = props.upcomingTurns[1];
+    if (!turn) return props.nextInstruction;
+    const key = turn.type === "roundabout" && turn.exitCount ? "roundaboutExit" : turn.type;
+    return t(`directions.${key}`).replace("{exit}", String(turn.exitCount ?? ""));
+});
 
 const displayTurns = computed(() => {
     return props.upcomingTurns.slice(1, 3);
@@ -33,12 +39,12 @@ const routeDistanceConverted = computed(() =>
                     turn.type === 'roundabout' ? turn.exitCount : undefined
                 "
                 :active="index === 0"
-                :active-color="activeSettings.routeColor"
+                :active-color="'#20242b'"
             />
         </div>
         <div class="turn-info">
             <p>{{ routeDistanceConverted }} {{ distanceUnit }}</p>
-            <p>{{ nextInstruction }}</p>
+            <p>{{ instruction }}</p>
         </div>
     </div>
 </template>

@@ -1,3 +1,4 @@
+import { applyMapTheme } from "~/utils/mapTheme";
 import type { Map as MapLibreGl, StyleSpecification } from "maplibre-gl";
 import {
     blendWithBg,
@@ -12,6 +13,7 @@ export async function initializeMap(
     container: HTMLElement,
 ): Promise<MapLibreGl> {
     const { settings, activeSettings } = useSettings();
+    const { mapPalette } = useNavigationTheme();
 
     const baseUrl = window.location.origin;
 
@@ -77,7 +79,7 @@ export async function initializeMap(
                 type: "background",
                 paint: {
                     "background-color":
-                        activeSettings.value.backgroundColor ?? "#24467b",
+                        mapPalette.value.backgroundColor,
                 },
             },
             {
@@ -519,6 +521,11 @@ export async function initializeMap(
             maxzoom: 6,
         });
     });
+
+    const refreshTheme = () => applyMapTheme(map, mapPalette.value);
+    map.on("load", refreshTheme);
+    const stopThemeWatch = watch(mapPalette, refreshTheme);
+    map.once("remove", stopThemeWatch);
 
     return map;
 }

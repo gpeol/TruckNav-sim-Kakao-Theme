@@ -1,3 +1,4 @@
+import type { ThemeMode, ThemeClock } from "~/utils/theme";
 import type { GameType } from "~/types";
 
 export type UnitSystem = "metric" | "imperial";
@@ -41,12 +42,15 @@ export interface AppSettingsState {
     activeUiComponents: ActiveComponents;
     locale: LocaleCode;
     routeTimeMode: RouteTimeMode;
+    themeMode: ThemeMode;
+    themeClock: ThemeClock;
+    customMapColors: boolean;
 }
 
 const DEFAULT_PROFILE: GameProfile = {
     themeColor: "#fbc02d",
     textColor: "light",
-    routeColor: "#22d3ee",
+    routeColor: "#ffcc00",
     roadColor: "#4a5f7a",
     backgroundColor: "#24467b",
     landColor: "#272d39",
@@ -86,7 +90,10 @@ const DEFAULT_SETTINGS: AppSettingsState = {
         "sleep",
         "topBar",
     ],
-    locale: "en",
+    locale: "ko",
+    themeMode: "auto",
+    themeClock: "device",
+    customMapColors: false,
     routeTimeMode: "game",
 };
 
@@ -105,14 +112,12 @@ export const useSettings = () => {
     const applySideEffects = () => {
         document.documentElement.style.setProperty(
             "--theme-color",
-            activeSettings.value.themeColor,
+            "#ffdc00",
         );
-
-        const isLight = activeSettings.value.textColor === "light";
 
         document.documentElement.style.setProperty(
             "--main-text-color",
-            isLight ? "#f2f2f2" : "#333",
+            "#20242b",
         );
 
         document.documentElement.style.setProperty(
@@ -134,7 +139,7 @@ export const useSettings = () => {
             "--top-bar-height",
             !settings.value.activeUiComponents.includes("topBar")
                 ? "0px"
-                : "40px",
+                : "56px",
         );
     };
 
@@ -227,6 +232,9 @@ export const useSettings = () => {
         settings.value.compactTripFontSize =
             DEFAULT_SETTINGS.compactTripFontSize;
         settings.value.routeTimeMode = DEFAULT_SETTINGS.routeTimeMode;
+        settings.value.themeMode = DEFAULT_SETTINGS.themeMode;
+        settings.value.themeClock = DEFAULT_SETTINGS.themeClock;
+        settings.value.customMapColors = DEFAULT_SETTINGS.customMapColors;
 
         settings.value.activeUiComponents = [
             ...DEFAULT_SETTINGS.activeUiComponents,

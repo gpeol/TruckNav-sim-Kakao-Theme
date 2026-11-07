@@ -11,7 +11,10 @@
         "postinstall": "patch-package && nuxt prepare",
         "electron:sync": "npx nuxi generate && npx cap sync electron && cd electron && npm run electron:start && cd ..",
         "electron:make": "npx nuxi generate && npx cap sync electron && cd electron && npm run electron:make && cd ..",
-        "android:sync": "npx nuxi generate && npx cap sync android && npx cap run android --target=52f73682434f"
+        "android:sync": "npx nuxi generate && npx cap sync android && npx cap run android --target=52f73682434f",
+        "typecheck": "nuxt prepare && vue-tsc -b --noEmit",
+        "test": "node --test tests/*.test.mjs",
+        "test:browser": "playwright test"
     },
     "dependencies": {
         "@capacitor-community/electron": "^5.0.1",
@@ -47,6 +50,7 @@
         "@iconify-json/lucide": "^1.2.102",
         "@iconify-json/map": "^1.2.2",
         "@iconify-json/svg-spinners": "^1.2.4",
+        "@playwright/test": "^1.65.0",
         "@types/electron": "^1.4.38",
         "@types/node": "^25.2.3",
         "@types/rbush": "^4.0.0",
@@ -56,7 +60,8 @@
         "patch-package": "^8.0.1",
         "sass-embedded": "^1.99.0",
         "ts-node": "^10.9.2",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vue-tsc": "^3.3.14"
     },
     "resolutions": {
         "glob": "11.0.5",

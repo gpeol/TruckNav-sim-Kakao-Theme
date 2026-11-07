@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 defineProps<{
-    onClick: () => void;
+    onClick?: () => void;
     isActive?: boolean;
     type?: "text-btn";
 }>();
 </script>
 
 <template>
-    <button class="option-btn" :class="type" @click.prevent="onClick">
+    <button class="option-btn" :class="type" :aria-pressed="isActive" @click.prevent="onClick?.()">
         <slot />
     </button>
 </template>

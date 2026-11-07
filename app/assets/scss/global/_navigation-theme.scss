@@ -1,0 +1,114 @@
+:root {
+    --surface: #ffffff;
+    --surface-muted: #f3f5f7;
+    --surface-raised: #ffffff;
+    --border-color: #e1e5e9;
+    --text-primary: #242a32;
+    --text-muted: #68727e;
+    --theme-color: #ffdc00;
+    --main-text-color: #20242b;
+    --app-font: 'Commissioner';
+    --top-bar-height: 56px;
+    --shadow-hud: 0 6px 28px #1724331a;
+    color-scheme: light;
+}
+:root[data-theme='night'] {
+    --surface: #202731;
+    --surface-muted: #151b23;
+    --surface-raised: #2a3440;
+    --border-color: #3a4654;
+    --text-primary: #f5f7fa;
+    --text-muted: #a8b3c1;
+    --shadow-hud: 0 6px 28px #0005;
+    color-scheme: dark;
+}
+body { font-family: var(--app-font), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-weight: 500; }
+:root body {
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, select:focus-visible, input:focus-visible, [role='button']:focus-visible {
+    outline: 3px solid #a77b00; outline-offset: 3px;
+}
+.nav-btn { min-height: 44px; border-radius: 14px; box-shadow: none; font-weight: 700; }
+.theme-controls {
+    background: var(--surface); border: 1px solid var(--border-color); border-radius: 22px;
+    padding: 20px; color: var(--text-primary); display: grid; gap: 14px;
+    .theme-heading { display: flex; align-items: center; gap: 8px; h2 { font-size: 1.6rem; font-weight: 700; } }
+    .theme-segments { display: flex; padding: 4px; gap: 4px; background: var(--surface-muted); border-radius: 14px; }
+    .theme-segments button { flex: 1; border: 0; min-height: 40px; border-radius: 11px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; font-weight: 700; }
+    .theme-segments button[aria-pressed='true'] { background: #ffdc00; color: #20242b; box-shadow: 0 2px 6px #0001; }
+    .theme-clock { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 1.4rem; }
+    select { max-width: 60%; min-height: 40px; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--surface-muted); color: var(--text-primary); }
+    .theme-description { font-size: 1.25rem; color: var(--text-muted); line-height: 1.6; }
+    .theme-custom { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; input { accent-color: #b58c00; width: 18px; height: 18px; } }
+}
+.section-mobile-menu {
+    overflow-y: auto; background: var(--surface-muted); padding: 0 24px 24px;
+    > .title { flex-shrink: 0; min-height: 64px; border-bottom: 1px solid var(--border-color); font-size: 1.4rem; .icon { color: var(--text-muted); } }
+    > .content { width: 100%; max-width: 720px; flex-grow: 0; padding: 32px 0; gap: 24px; justify-content: flex-start; }
+    .journey-heading { h1 { font-size: clamp(2.8rem, 5vw, 4rem); font-weight: 800; letter-spacing: -1.4px; margin: 8px 0 12px; } p { color: var(--text-muted); line-height: 1.6; font-size: 1.5rem; } .journey-eyebrow { font-size: 1.1rem; letter-spacing: 2px; font-weight: 800; } }
+    .top-content { background: var(--surface); border: 1px solid var(--border-color); border-radius: 22px; padding: 24px; }
+    .top-buttons { flex-direction: row; flex-wrap: wrap; > button { flex: 1; } }
+    .success-btn { min-height: 56px; font-size: 1.8rem; }
+    .mod-list-container .mod-item { background: var(--surface-muted); border-color: var(--border-color); .select-btn, .download-btn { background: #ffdc00; color: #20242b; } }
+}
+.game-select-section { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.game-select-section .game-btn {
+    opacity: 1; max-width: none !important; width: 100%; overflow: hidden; border: 2px solid var(--border-color);
+    border-radius: 18px; color: var(--text-primary); background: var(--surface-muted); padding: 0; cursor: pointer;
+    img { width: 100%; height: 120px; object-fit: cover; }
+    .game-name-wrapper { padding: 14px; gap: 6px; }
+    .game-name { font-size: 1.4rem; text-transform: none; font-weight: 700; }
+    &.is-selected { border-color: #b49200; box-shadow: 0 0 0 3px #ffdc0050; .game-name-wrapper { background: #ffdc00; color: #20242b; } }
+}
+.section-device-info { width: 100%; max-width: 1000px; margin: auto; height: 100dvh; overflow-y: auto; padding-bottom: 24px; .steps { border-radius: 20px; background: var(--surface-muted); border: 1px solid var(--border-color); } }
+.settings-panel {
+    position: fixed; inset: 0; z-index: 3000;
+    .settings-title { padding: 8px 24px; }
+    .menu-list { padding: 12px max(20px, calc((100vw - 840px) / 2)) 32px; gap: 16px; }
+    .option.setting { border-radius: 16px; background: var(--surface-muted); padding: 18px; font-size: 1.5rem; min-height: 64px; gap: 12px; }
+    .selector { background: var(--surface-raised); border: 1px solid var(--border-color); }
+    .panel-description { color: var(--text-muted); font-size: 1.3rem; }
+}
+.popup-window, .connect-window { border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-hud); max-width: calc(100vw - 24px); }
+.game-information {
+    padding: 8px 18px; border-bottom: 1px solid var(--border-color); height: var(--top-bar-height); background: var(--surface); box-shadow: var(--shadow-hud);
+    .road-perspective { display: none; }
+    .truck-speed-div { min-width: 86px; padding: 0; gap: 6px; }
+    .truck-speed { font-size: 3rem; font-weight: 800; }
+    .km-h { color: var(--text-muted); }
+    .game-time { background: var(--surface-muted); border: 0; padding: 7px 12px; }
+    .fuel-amount, .sleep-div { font-size: 1.4rem; }
+}
+.option-btn { min-width: 48px; min-height: 48px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-hud); border: 1px solid var(--border-color); color: var(--text-primary); }
+.card {
+    background: var(--surface); border: 0; border-radius: 22px; box-shadow: var(--shadow-hud); height: auto; min-height: 108px; overflow: hidden;
+    .turn-directions { background: #ffdc00; color: #20242b; padding: 12px 18px; }
+    .turn-info { padding: 12px 18px; margin: 0; gap: 12px; flex-wrap: wrap; p:first-child { font-size: 2.1rem; font-weight: 800; } p:last-child { font-size: 1.4rem; } }
+}
+.card .direction-icon { fill: #20242b; stroke: #20242b; }
+.bottom-sheet { border: 1px solid var(--border-color); border-bottom: 0; border-radius: 28px 28px 0 0; box-shadow: var(--shadow-hud); .drag-pill { background: var(--border-color); } .separator { background: var(--border-color); } .full-stats .stat-block .label { color: var(--text-muted); } .icon-dist, .icon-eta { color: var(--text-muted) !important; } }
+.compact-trip-progress { border: 1px solid var(--border-color); border-radius: 18px 0 0 18px; padding: 10px 14px; box-shadow: var(--shadow-hud); }
+.speed-limit-sign { background: white; box-shadow: var(--shadow-hud); }
+@media (min-width: 900px) {
+    .card { width: 300px; left: 80px; top: calc(var(--top-bar-height) + 18px); transform: none; }
+    .bottom-sheet { width: 440px; left: 24px; bottom: 20px; border-radius: 24px; border-bottom: 1px solid var(--border-color); }
+    .speed-limit-sign { left: auto; right: 24px; bottom: 28px; }
+}
+@media (max-width: 520px) {
+    .section-mobile-menu { padding: 0 16px 16px; .top-content { padding: 16px; } }
+    .game-select-section .game-btn img { height: 100px; }
+    .game-select-section .game-btn .game-name-wrapper { padding: 10px; }
+    .game-information { padding: 8px; .gas-sleep { gap: 8px; } .sleep-div { min-width: auto; } .game-time { min-width: 0; padding: 5px; font-size: 1.2rem; } }
+    .card { width: calc(100% - 152px); min-height: 96px; .turn-info { padding: 10px 12px; } }
+    .settings-panel .option.setting { flex-wrap: wrap; }
+    .theme-controls { padding: 16px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    .section-mobile-menu > .content { padding-top: 16px; }
+    .card { min-height: 80px; .turn-directions { padding: 6px; } }
+    .bottom-sheet { max-height: calc(100dvh - 76px); overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+}

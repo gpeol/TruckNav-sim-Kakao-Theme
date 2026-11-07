@@ -5,7 +5,6 @@ import maplibregl from "maplibre-gl";
 import { usePlatform } from "~/composables/Platform";
 import {
     blendWithBg,
-    darkenColor,
     lightenColor,
 } from "~/assets/utils/shared/colors";
 import { generateTruckIcon } from "~/assets/utils/map/markers";
@@ -210,59 +209,6 @@ watch(
         if (map.value.getLayer("prefab-zones")) {
             const blended = blendWithBg(lightenColor(newColor, 0.3), 0.6);
             map.value.setPaintProperty("prefab-zones", "fill-color", blended);
-        }
-    },
-);
-
-watch(
-    () => activeSettings.value.backgroundColor,
-    async (newColor) => {
-        if (!map.value) return;
-
-        if (map.value.getLayer("background")) {
-            map.value.setPaintProperty(
-                "background",
-                "background-color",
-                newColor,
-            );
-        }
-    },
-);
-
-watch(
-    () => activeSettings.value.landColor,
-    async (newColor) => {
-        if (!map.value) return;
-
-        if (map.value.getLayer("water")) {
-            map.value.setPaintProperty("water", "fill-color", newColor);
-        }
-
-        if (map.value.getLayer("country-borders")) {
-            map.value.setPaintProperty(
-                "country-borders",
-                "fill-color",
-                darkenColor(newColor, 0.4),
-            );
-        }
-
-        if (map.value.getLayer("water-outline")) {
-            map.value.setPaintProperty(
-                "water-outline",
-                "line-color",
-                darkenColor(newColor, 0.4),
-            );
-        }
-    },
-);
-
-watch(
-    () => activeSettings.value.roadColor,
-    async (newColor) => {
-        if (!map.value) return;
-
-        if (map.value.getLayer("roads")) {
-            map.value.setPaintProperty("roads", "line-color", newColor);
         }
     },
 );
@@ -518,11 +464,11 @@ const onCancelRoute = () => {
                     />
 
                     <div class="left-buttons">
-                        <HudButton :onClick="goHome">
+                        <HudButton :aria-label="t('common.selectGame')" :onClick="goHome">
                             <Icon name="lucide:arrow-left" class="icon" />
                         </HudButton>
 
-                        <HudButton :onClick="toggleSettingsPanel">
+                        <HudButton :aria-label="t('settings.title')" :onClick="toggleSettingsPanel">
                             <Icon name="lucide:settings" class="icon" />
                         </HudButton>
                     </div>
@@ -571,15 +517,16 @@ const onCancelRoute = () => {
                     />
 
                     <div class="hud-buttons">
-                        <HudButton v-if="isWeb" :onClick="onToggleFullscreen">
+                        <HudButton v-if="isWeb" :aria-label="t('theme.fullscreen')" :onClick="onToggleFullscreen">
                             <Icon name="lucide:fullscreen" class="icon" />
                         </HudButton>
 
-                        <HudButton :onClick="onResetNorth">
+                        <HudButton :aria-label="t('theme.north')" :onClick="onResetNorth">
                             <Icon name="lucide:compass" class="icon" />
                         </HudButton>
 
                         <HudButton
+                            :aria-label="t('theme.follow')"
                             :is-active="isAutoFollowEnabled"
                             :class="{ 'green-icon': isAutoFollowEnabled }"
                             :onClick="toggleAutoFollow"
@@ -593,6 +540,7 @@ const onCancelRoute = () => {
                         </HudButton>
 
                         <HudButton
+                            :aria-label="t('theme.tap')"
                             :is-active="isClickingEnabled"
                             :class="
                                 isClickingEnabled ? 'green-icon' : 'red-icon'

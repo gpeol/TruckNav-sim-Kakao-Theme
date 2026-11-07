@@ -7,17 +7,18 @@ defineProps<{
 </script>
 
 <template>
-    <div
+    <button
+        type="button"
         @click.prevent="selectCard(gameName)"
         class="game-btn"
         :style="{ maxWidth: `${width}px` }"
     >
         <img :src="`/images/game-covers/${gameName}.webp`" alt="" />
         <div class="game-name-wrapper">
-            <p class="game-name">{{ gameName }}</p>
+            <p class="game-name">{{ gameName === "ets2" ? "Euro Truck Simulator 2" : "American Truck Simulator" }}</p>
             <slot name="icon"></slot>
         </div>
-    </div>
+    </button>
 </template>
 
 <style

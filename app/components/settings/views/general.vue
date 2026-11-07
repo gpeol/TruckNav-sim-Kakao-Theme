@@ -101,10 +101,10 @@ onMounted(async () => {
                 variant="none"
                 class="selector"
                 :ui="{
-                    trailingIcon: 'shrink-0 size-[20px] text-white !px-6',
-                    content: 'bg-[#222e3c] shadow-xl rounded-md',
-                    item: 'flex items-center justify-between text-[1.6rem] font-BOLD !py-2 !px-3 text-[#f2f2f2] data-[highlighted]:bg-[#3d546e] rounded cursor-pointer transition-colors',
-                    itemTrailingIcon: 'text-white',
+                    trailingIcon: 'shrink-0 size-[20px] text-[var(--text-primary)] !px-6',
+                    content: 'bg-[var(--surface-raised)] shadow-xl rounded-md',
+                    item: 'flex items-center justify-between text-[1.6rem] font-BOLD !py-2 !px-3 text-[var(--text-primary)] data-[highlighted]:bg-[var(--surface-muted)] rounded cursor-pointer transition-colors',
+                    itemTrailingIcon: 'text-[var(--text-primary)]',
                 }"
             >
                 <template #default>

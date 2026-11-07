@@ -7,10 +7,11 @@ import {
 
 const { activeSettings } = useSettings();
 
+const { mapPalette } = useNavigationTheme();
 const colors = computed(() => {
-    const land = activeSettings.value?.landColor ?? "#60708e";
-    const road = activeSettings.value?.roadColor ?? "#20324a";
-    const water = activeSettings.value?.backgroundColor ?? "#24467b";
+    const land = mapPalette.value.landColor;
+    const road = mapPalette.value.roadColor;
+    const water = mapPalette.value.backgroundColor;
     const theme = activeSettings.value?.themeColor;
 
     return {
