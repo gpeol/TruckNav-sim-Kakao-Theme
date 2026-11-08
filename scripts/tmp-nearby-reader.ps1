@@ -1,5 +1,6 @@
-param([int]$ParentProcessId = 0)
+param([int]$ParentProcessId = 0, [string]$TestMappingName = '')
 $ErrorActionPreference = 'Stop'
+if ($TestMappingName -and $TestMappingName -notmatch '^Local\\TruckNavTMPNearbyTest_[a-z0-9]+$') { throw 'Invalid test mapping name.' }
 Add-Type -TypeDefinition @'
 using System;
 using System.IO.MemoryMappedFiles;
@@ -11,8 +12,8 @@ public static class TruckNavNearbyReader {
         public string state;
         public double[][] vehicles;
     }
-    public static Snapshot Read() {
-        using (var map = MemoryMappedFile.OpenExisting(@"Local\TruckNavTMPNearbyV1", MemoryMappedFileRights.Read))
+    public static Snapshot Read(string mappingName) {
+        using (var map = MemoryMappedFile.OpenExisting(mappingName, MemoryMappedFileRights.Read))
         using (var view = map.CreateViewAccessor(0, 16416, MemoryMappedFileAccess.Read)) {
             int first = view.ReadInt32(0);
             if ((first & 1) != 0) throw new InvalidOperationException();
@@ -40,7 +41,7 @@ public static class TruckNavNearbyReader {
 
 while ($true) {
     if ($ParentProcessId -gt 0 -and -not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) { break }
-    try { $data = [TruckNavNearbyReader]::Read() }
+    try { $data = [TruckNavNearbyReader]::Read($(if ($TestMappingName) { $TestMappingName } else { 'Local\TruckNavTMPNearbyV1' })) }
     catch { $data = @{ state = 'unavailable'; vehicles = @() } }
     [Console]::Out.WriteLine((ConvertTo-Json -InputObject $data -Depth 4 -Compress))
     Start-Sleep -Milliseconds 250

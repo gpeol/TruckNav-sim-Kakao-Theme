@@ -25,7 +25,7 @@ export function useLandingAutoStart(view: Ref<string>, launch: () => void) {
         cancelTimer();
         if (retry) clearTimeout(retry);
         retry = null;
-        if (socket) { socket.onclose = null; socket.onmessage = null; socket.close(); socket = null; }
+        if (socket) { socket.onclose = null; socket.onmessage = null; socket.onerror = null; socket.close(); socket = null; }
         detected = null;
         checkingMap = false;
         nextMapCheck = 0;
@@ -41,8 +41,9 @@ export function useLandingAutoStart(view: Ref<string>, launch: () => void) {
             const connection = new WebSocket(telemetrySocketUrl(location.hostname, settings.value.savedIP,
                 Capacitor.isNativePlatform(), isSecurePreviewDocument(), location.protocol, location.host));
             socket = connection;
+            const ownsSocket = () => token === generation && socket === connection;
             connection.onmessage = event => {
-                if (token !== generation) return;
+                if (!ownsSocket()) return;
                 let game: string;
                 try { game = String(JSON.parse(event.data)?.game).toLowerCase(); } catch { return; }
                 if (game !== 'ets2' && game !== 'ats') { detected = null; cancelTimer(); return; }
@@ -72,8 +73,14 @@ export function useLandingAutoStart(view: Ref<string>, launch: () => void) {
                     if (inputAtCheck === lastInput && settings.value.selectedGame === game && detected === game && ready && Date.now() - lastSeen <= 3000 && document.visibilityState === 'visible' && Date.now() - lastInput >= 10000) launch();
                 }, Math.max(0, 10000 - (Date.now() - lastInput)));
             };
-            connection.onerror = () => connection.close();
-            connection.onclose = () => { detected = null; cancelTimer(); if (token === generation) retry = setTimeout(connect, 2000); };
+            connection.onerror = () => { if (ownsSocket()) connection.close(); };
+            connection.onclose = () => {
+                if (!ownsSocket()) return;
+                socket = null;
+                detected = null;
+                cancelTimer();
+                retry = setTimeout(connect, 2000);
+            };
         };
         connect();
     }

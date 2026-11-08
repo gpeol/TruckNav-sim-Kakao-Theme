@@ -2,7 +2,8 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 // Read-only local shared memory. The helper has no listener or input channel.
-export function createTmpNearbySource({ spawnFn = spawn, now = Date.now } = {}) {
+export function createTmpNearbySource({ spawnFn = spawn, now = Date.now, testMappingName = '' } = {}) {
+    if (testMappingName && !/^Local\\TruckNavTMPNearbyTest_[a-z0-9]+$/.test(testMappingName)) throw new Error('Invalid test mapping name');
     const script = fileURLToPath(new URL('./tmp-nearby-reader.ps1', import.meta.url));
 
     let pending = '';
@@ -15,7 +16,7 @@ export function createTmpNearbySource({ spawnFn = spawn, now = Date.now } = {}) 
     function start() {
     if (stopped || child || now() < nextStart) return;
     pending = '';
-    const owned = spawnFn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, '-ParentProcessId', String(process.pid)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    const owned = spawnFn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, '-ParentProcessId', String(process.pid), ...(testMappingName ? ['-TestMappingName', testMappingName] : [])], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     child = owned;
     let reported = false;
     child.stderr?.on('data', data => {

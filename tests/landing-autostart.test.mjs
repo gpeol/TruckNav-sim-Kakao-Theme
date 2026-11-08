@@ -11,12 +11,13 @@ const code = ts.transpileModule(await readFile(new URL('../app/composables/Landi
 
 function fixture(initialView = 'gameManager') {
     let clock = 0, launches = 0, installed = true, nextId = 0, checks = 0;
+    let viewWatcher;
     const selection = { value: null };
     const timers = new Map(), events = new Map(), sockets = [], mounts = [];
     const settings = { value: { savedIP: null, selectedGame: null } };
     const view = { value: initialView };
     const document = { visibilityState: 'visible', addEventListener: (n, f) => events.set(n, f), removeEventListener: n => events.delete(n) };
-    class Socket { constructor() { sockets.push(this); } close() {} send(game) { this.onmessage({ data: JSON.stringify({ game }) }); } }
+    class Socket { constructor() { sockets.push(this); } close() { this.closeCalls = (this.closeCalls || 0) + 1; } send(game) { this.onmessage({ data: JSON.stringify({ game }) }); } }
     const exports = {};
     vm.runInNewContext(code, {
         exports, require: name => name === '@capacitor/core' ? { Capacitor: { isNativePlatform: () => false } }
@@ -29,10 +30,10 @@ function fixture(initialView = 'gameManager') {
         Date: class extends Date { static now() { return clock; } },
         setTimeout: (fn, delay) => { const id = ++nextId; timers.set(id, { fn, at: clock + delay }); return id; },
         clearTimeout: id => timers.delete(id), onMounted: fn => mounts.push(fn), onUnmounted: () => {},
-        watch: (_s, fn) => fn(),
+        watch: (_s, fn) => { viewWatcher = fn; fn(); },
     });
     exports.useLandingAutoStart(view, () => { launches++; }); mounts.forEach(fn => fn());
-    return { sockets, events, document, settings, selection, get checks() { return checks; }, get launches() { return launches; }, set installed(v) { installed = v; },
+    return { sockets, events, document, settings, selection, changeView(value) { view.value = value; viewWatcher(); }, get checks() { return checks; }, get launches() { return launches; }, set installed(v) { installed = v; },
         async tick(ms) { clock += ms; for (const [id, timer] of [...timers]) if (timer.at <= clock) { timers.delete(id); await timer.fn(); } },
     };
 }
@@ -84,4 +85,37 @@ test('input before detection still detects, manual selection is preserved, and m
     await missing.tick(9999); missing.sockets[0].send('ets2'); await missing.tick(1);
     for (let i = 0; i < 100; i++) { missing.sockets[0].send('ets2'); await missing.tick(1); }
     assert.equal(missing.checks, 1);
+});
+
+
+test('queued callbacks cannot change a replacement socket after reconnect or landing restart', async () => {
+    for (const restartLanding of [false, true]) {
+        const f = fixture();
+        const old = f.sockets[0];
+        old.send('ets2');
+        const message = old.onmessage, close = old.onclose, error = old.onerror;
+        if (restartLanding) {
+            f.changeView('navigation');
+            f.changeView('desktopHome');
+        } else {
+            close();
+            await f.tick(2000);
+        }
+        const replacement = f.sockets[1];
+        replacement.send('ats');
+        const oldCloseCalls = old.closeCalls || 0;
+        message({ data: JSON.stringify({ game: 'ets2' }) });
+        error();
+        close();
+        assert.equal(f.settings.value.selectedGame, 'ats');
+        assert.equal(old.closeCalls || 0, oldCloseCalls);
+        await f.tick(restartLanding ? 9999 : 7999);
+        assert.equal(f.sockets.length, 2);
+        replacement.send('ats');
+        // A queued close immediately before expiry must not cancel this timer.
+        close();
+        await f.tick(1);
+        assert.equal(f.launches, 1);
+        assert.equal(f.sockets.length, 2);
+    }
 });

@@ -1,9 +1,12 @@
 // Exercises the exact mapping producer against the PowerShell reader without a game.
 #include "../../plugins/tmp-nearby/nearby.cxx"
 #include <cstdio>
+#include <cwchar>
 
-int main() {
-    if (!openSnapshot()) return 1;
+int wmain(int argc, wchar_t** argv) {
+    const wchar_t* prefix = L"Local\\TruckNavTMPNearbyTest_";
+    if (argc != 2 || std::wcsncmp(argv[1], prefix, std::wcslen(prefix)) != 0) return 2;
+    if (!openSnapshot(argv[1])) return 1;
     InterlockedIncrement(&snapshot->sequence);
     snapshot->magic = kMagic;
     snapshot->version = kVersion;

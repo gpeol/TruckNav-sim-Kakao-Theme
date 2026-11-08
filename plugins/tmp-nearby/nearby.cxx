@@ -37,7 +37,7 @@ SharedSnapshot* snapshot = nullptr;
 ULONGLONG lastRefresh = 0;
 bool connected = false;
 
-bool openSnapshot() {
+bool openSnapshot(const wchar_t* mappingName = L"Local\\TruckNavTMPNearbyV1") {
     // Explicit user SID permits a non-elevated reader when the game is elevated.
     HANDLE token = nullptr;
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) return false;
@@ -58,7 +58,7 @@ bool openSnapshot() {
     SECURITY_ATTRIBUTES attributes{sizeof(attributes), descriptor, FALSE};
     SetLastError(ERROR_SUCCESS);
     mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, &attributes, PAGE_READWRITE, 0,
-                                 sizeof(SharedSnapshot), L"Local\\TruckNavTMPNearbyV1");
+                                 sizeof(SharedSnapshot), mappingName);
     const DWORD error = GetLastError();
     LocalFree(descriptor);
     if (!mapping || error == ERROR_ALREADY_EXISTS) {
