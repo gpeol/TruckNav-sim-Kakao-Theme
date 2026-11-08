@@ -1,5 +1,6 @@
 import { routeProgress as calculateRouteProgress } from "~/utils/routeProgress";
 import { matchGameRouteNodes } from "~/utils/matchGameRoute";
+import { buildWaypointProgress, clampSearchLimit, countPassedWaypoints, dropWaypoints, type WaypointProgress } from "~/utils/waypointProgress";
 import { convertEts2ToGeo, convertGeoToEts2 } from "~/assets/utils/map/converters";
 import maplibregl from "maplibre-gl";
 import { generateDestinationIcon } from "~/assets/utils/map/markers";
@@ -65,6 +66,7 @@ export const useRouteController = (
 
     const waypointList = ref<[number, number][]>([]);
     const snappedWaypointNodeIds = ref<number[]>([]);
+    let waypointProgress: WaypointProgress | null = null;
 
     function updateRouteEta(gameHours: number, realHours: number) {
         const usesRealTime = settings.value.routeTimeMode === "real";
@@ -253,8 +255,10 @@ export const useRouteController = (
                         return distance <= 40 ? [{ id, distance }] : [];
                     });
                 });
-                gameNodes = matchGameRouteNodes(groups, adjacency) ?? undefined;
-                if (!gameNodes) {
+                const match = matchGameRouteNodes(groups, adjacency);
+                gameNodes = match?.nodes;
+                if (!match || !gameNodes) {
+                    console.warn("[TruckNav] Game route could not be matched to the local road graph", { points: gamePoints.length, matchedPoints: groups.filter(g => g.length).length });
                     routeFound.value = false;
                     isRouteActive.value = false;
                     return;
@@ -266,7 +270,11 @@ export const useRouteController = (
                         ? gamePoints.length - 1
                         : gamePoints.findIndex((point, i) => i > previousStop && Math.hypot(point[0] - x, point[1] - z) < 0.01);
                     previousStop = index;
-                    return gameNodes![index]!;
+                    if (index < 0) return undefined as unknown as number;
+                    // A stop may sit mid-edge; use the next matched graph node after it.
+                    let mapped = -1;
+                    for (let i = index; i < match.pointIndex.length && mapped < 0; i++) mapped = match.pointIndex[i]!;
+                    return gameNodes![mapped]!;
                 });
                 if (gameStopNodes.some(id => id === undefined)) {
                     routeFound.value = false;
@@ -315,6 +323,13 @@ export const useRouteController = (
 
                 const frozenRawPath = Object.freeze(result.displayPath);
                 currentRoutePath.value = frozenRawPath as any;
+                waypointProgress = buildWaypointProgress(
+                    result.displayPath,
+                    waypointList.value.map((stop, i) => {
+                        const id = snappedWaypointNodeIds.value[i];
+                        return (id !== undefined && nodeCoords.get(id)) || stop;
+                    }),
+                );
                 routeStatsCache.value = result.stats;
 
                 const cache = result.stats;
@@ -532,6 +547,8 @@ export const useRouteController = (
         avgSpeed: number,
     ) {
         waypointList.value.splice(index, 1);
+        snappedWaypointNodeIds.value.splice(index, 1);
+        if (waypointProgress) { waypointProgress.indices.splice(index, 1); waypointProgress.deadEnd.splice(index, 1); waypointProgress.reached.splice(index, 1); }
 
         if (waypointList.value.length === 0) {
             clearRouteState();
@@ -1106,7 +1123,9 @@ export const useRouteController = (
         let bestIndex = currentRouteIndex.value;
         let minSqDist = Infinity;
 
-        const searchLimit = Math.min(path.length - 1, bestIndex + 500);
+        let searchLimit = Math.min(path.length - 1, bestIndex + 500);
+        if (waypointProgress && !gameRouteOwned.value)
+            searchLimit = Math.max(Math.min(searchLimit, bestIndex + 1), clampSearchLimit(waypointProgress, searchLimit));
         const startSearch = Math.max(0, bestIndex - 5);
 
         for (let i = startSearch; i < searchLimit; i++) {
@@ -1123,6 +1142,17 @@ export const useRouteController = (
         }
 
         currentRouteIndex.value = bestIndex;
+
+        if (waypointProgress && !gameRouteOwned.value) {
+            const passed = countPassedWaypoints(waypointProgress, path, bestIndex, truckCoords);
+            if (passed > 0) {
+                // Intermediate stops already visited must not be routed to again on recalculation.
+                waypointList.value.splice(0, passed);
+                snappedWaypointNodeIds.value.splice(0, passed);
+                dropWaypoints(waypointProgress, passed);
+                drawDestinationMarkers();
+            }
+        }
 
         let activeThreshold = DEVIATION_THRESHOLD_SQ;
 
@@ -1224,6 +1254,7 @@ export const useRouteController = (
         isRouteActive.value = false;
         endNodeId.value = null;
         currentRoutePath.value = null;
+        waypointProgress = null;
 
         waypointList.value = [];
         snappedWaypointNodeIds.value = [];
