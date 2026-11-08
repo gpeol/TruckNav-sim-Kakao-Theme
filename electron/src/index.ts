@@ -40,6 +40,9 @@ import {
 } from "./discordRpc";
 import axios from "axios";
 import extract from "extract-zip";
+import { registerTrafficIpc } from "./trafficIpc";
+import { registerGameRouteIpc } from "./gameRouteIpc";
+import { registerTmpNearbyIpc } from "./tmpNearbyIpc";
 
 const appSettings = getSettings();
 
@@ -488,6 +491,33 @@ async function getAvailablePort(startingPort: number): Promise<number> {
 /**
  * Ipc Handlers
  */
+registerTrafficIpc(
+    ipcMain,
+    () => myCapacitorApp.getMainWindow(),
+    () => myCapacitorApp.getCustomURLScheme(),
+    () => app.isPackaged
+        ? path.join(process.resourcesPath, 'truckersmp-traffic-source.mjs')
+        : path.resolve(app.getAppPath(), '..', 'scripts', 'truckersmp-traffic-source.mjs'),
+);
+const stopTmpNearbyReader = registerTmpNearbyIpc(
+    ipcMain,
+    () => myCapacitorApp.getMainWindow(),
+    () => myCapacitorApp.getCustomURLScheme(),
+    () => app.isPackaged
+        ? path.join(process.resourcesPath, 'tmp-nearby-source.mjs')
+        : path.resolve(app.getAppPath(), '..', 'scripts', 'tmp-nearby-source.mjs'),
+);
+app.on('before-quit', stopTmpNearbyReader);
+const stopGameRouteReader = registerGameRouteIpc(
+    ipcMain,
+    () => myCapacitorApp.getMainWindow(),
+    () => myCapacitorApp.getCustomURLScheme(),
+    () => app.isPackaged
+        ? path.join(process.resourcesPath, 'game-route-source.mjs')
+        : path.resolve(app.getAppPath(), '..', 'scripts', 'game-route-source.mjs'),
+);
+app.on('before-quit', stopGameRouteReader);
+
 ipcMain.handle("get-settings", () => {
     return getSettings();
 });

@@ -28,10 +28,20 @@ export const useMapCamera = (map: Ref<Map | null>) => {
 
     let markerEl: HTMLDivElement | null = null;
 
+    const navigationPadding = () => {
+        const container = map.value?.getContainer();
+        const width = container?.clientWidth ?? 0;
+        const height = container?.clientHeight ?? 0;
+        return width >= 640 && width > height
+            ? { ...PADDING_NAV, left: Math.min(width * 0.5, 440) }
+            : PADDING_NAV;
+    };
+
     const initMarker = (imgSrc: string, size: number) => {
         if (!map.value) return;
         if (!markerEl) {
             markerEl = document.createElement("div");
+            markerEl.dataset.truckMarker = "true";
             markerEl.style.position = "absolute";
             markerEl.style.top = "0";
             markerEl.style.left = "0";
@@ -89,7 +99,7 @@ export const useMapCamera = (map: Ref<Map | null>) => {
                     bearing: isAutoFollowEnabled.value
                         ? currentTruckHeading
                         : 0,
-                    padding: isNavigating.value ? PADDING_NAV : PADDING_FREE,
+                    padding: isNavigating.value ? navigationPadding() : PADDING_FREE,
                 });
             }
 
@@ -170,7 +180,7 @@ export const useMapCamera = (map: Ref<Map | null>) => {
             bearing: currentTruckHeading,
             pitch: map.value.getPitch(),
             duration: 350,
-            padding: isNavigating.value ? PADDING_NAV : PADDING_FREE,
+            padding: isNavigating.value ? navigationPadding() : PADDING_FREE,
         });
     };
 
@@ -213,6 +223,34 @@ export const useMapCamera = (map: Ref<Map | null>) => {
         isCameraLocked.value = true;
     };
 
+    const showRouteOverview = (coords: readonly [number, number][]) => {
+        if (!map.value || coords.length < 2) return;
+        const valid = coords.filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]));
+        if (valid.length < 2) return;
+        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+        for (const [lng, lat] of valid) {
+            minLng = Math.min(minLng, lng); minLat = Math.min(minLat, lat);
+            maxLng = Math.max(maxLng, lng); maxLat = Math.max(maxLat, lat);
+        }
+        const container = map.value.getContainer();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        if (!width || !height) return;
+        const landscape = width >= 640 && width > height;
+        isCameraLocked.value = false;
+        isAutoFollowEnabled.value = false;
+        if (autoLockTimer) clearTimeout(autoLockTimer);
+        isEasing = true;
+        if (easeTimeout) clearTimeout(easeTimeout);
+        easeTimeout = setTimeout(() => { isEasing = false; }, 500);
+        map.value.fitBounds([[minLng, minLat], [maxLng, maxLat]], {
+            padding: landscape
+                ? { top: Math.min(100, height * 0.2), right: 45, bottom: 35, left: Math.min(width * 0.48, 470) }
+                : { top: Math.min(130, height * 0.2), right: 30, bottom: Math.min(280, height * 0.38), left: 30 },
+            bearing: 0, pitch: 0, maxZoom: 11, duration: 350,
+        });
+    };
+
     const startNavigationMode = (coords: [number, number], heading: number) => {
         if (!map.value) return;
         isNavigating.value = true;
@@ -234,7 +272,7 @@ export const useMapCamera = (map: Ref<Map | null>) => {
             zoom: 11,
             pitch: map.value.getPitch(),
             duration: 350,
-            padding: PADDING_NAV,
+            padding: navigationPadding(),
         });
     };
 
@@ -264,6 +302,7 @@ export const useMapCamera = (map: Ref<Map | null>) => {
         resumeCameraLock,
         toggleAutoFollow,
         lockCamera,
+        showRouteOverview,
         startNavigationMode,
     };
 };

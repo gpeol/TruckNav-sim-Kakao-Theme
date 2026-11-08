@@ -28,3 +28,8 @@ ets2-telemetry-server
 
 
 public/debug-roadnetwork/
+
+# Browser test artifacts
+playwright-report/
+test-results/
+*.tsbuildinfo

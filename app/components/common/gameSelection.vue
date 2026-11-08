@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 defineProps<{ width: number }>();
 const { settings, updateGlobal } = useSettings();
+const emit = defineEmits<{ gameSelected: [game: 'ats' | 'ets2' | null] }>();
 
 const selectCard = (game: "ats" | "ets2" | null) => {
+    emit('gameSelected', game);
     updateGlobal("selectedGame", game);
 };
 </script>
@@ -13,6 +15,7 @@ const selectCard = (game: "ats" | "ets2" | null) => {
             game-name="ats"
             :select-card="selectCard"
             :class="{ 'is-selected': settings.selectedGame === 'ats' }"
+            :aria-pressed="settings.selectedGame === 'ats'"
             :width="width"
         >
             <template #icon>
@@ -24,6 +27,7 @@ const selectCard = (game: "ats" | "ets2" | null) => {
             :select-card="selectCard"
             game-name="ets2"
             :class="{ 'is-selected': settings.selectedGame === 'ets2' }"
+            :aria-pressed="settings.selectedGame === 'ets2'"
             :width="width"
         >
             <template #icon>

@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.21)
+project(trucknav_tmp_nearby LANGUAGES CXX)
+
+set(TRUCKERSMP_SDK_DIR "" CACHE PATH "Path to TruckersMP GameClientSDK checkout")
+if(NOT EXISTS "${TRUCKERSMP_SDK_DIR}/include/TruckersMP/TruckersMP.hxx")
+    message(FATAL_ERROR "Set TRUCKERSMP_SDK_DIR to the GameClientSDK checkout")
+endif()
+add_library(trucknav_tmp_nearby SHARED nearby.cxx)
+target_compile_features(trucknav_tmp_nearby PRIVATE cxx_std_17)
+target_include_directories(trucknav_tmp_nearby PRIVATE "${TRUCKERSMP_SDK_DIR}/include")
+target_link_libraries(trucknav_tmp_nearby PRIVATE advapi32)

@@ -1,0 +1,276 @@
+:root {
+    --surface: #ffffff;
+    --surface-muted: #f3f5f7;
+    --surface-raised: #ffffff;
+    --border-color: #e1e5e9;
+    --text-primary: #242a32;
+    --text-muted: #68727e;
+    --theme-color: #2988ff;
+    --main-text-color: #20242b;
+    --app-font: 'Commissioner';
+    --top-bar-height: 56px;
+    --shadow-hud: 0 6px 28px #1724331a;
+    color-scheme: light;
+}
+:root[data-theme='night'] {
+    --surface: #202731;
+    --surface-muted: #151b23;
+    --surface-raised: #2a3440;
+    --border-color: #3a4654;
+    --text-primary: #f5f7fa;
+    --text-muted: #a8b3c1;
+    --shadow-hud: 0 6px 28px #0005;
+    color-scheme: dark;
+}
+body { font-family: var(--app-font), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-weight: 500; }
+:root body {
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, select:focus-visible, input:focus-visible, [role='button']:focus-visible {
+    outline: 3px solid #a77b00; outline-offset: 3px;
+}
+.nav-btn { min-height: 44px; border-radius: 14px; box-shadow: none; font-weight: 700; }
+.theme-controls {
+    background: var(--surface); border: 1px solid var(--border-color); border-radius: 22px;
+    padding: 20px; color: var(--text-primary); display: grid; gap: 14px;
+    .theme-heading { display: flex; align-items: center; gap: 8px; h2 { font-size: 1.6rem; font-weight: 700; } }
+    .theme-segments { display: flex; padding: 4px; gap: 4px; background: var(--surface-muted); border-radius: 14px; }
+    .theme-segments button { flex: 1; border: 0; min-height: 40px; border-radius: 11px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; font-weight: 700; }
+    .theme-segments button[aria-pressed='true'] { background: #ffdc00; color: #20242b; box-shadow: 0 2px 6px #0001; }
+    .theme-clock { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 1.4rem; }
+    select { max-width: 60%; min-height: 40px; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--surface-muted); color: var(--text-primary); }
+    .theme-description { font-size: 1.25rem; color: var(--text-muted); line-height: 1.6; }
+    .theme-custom { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; input { accent-color: #b58c00; width: 18px; height: 18px; } }
+}
+.section-mobile-menu {
+    overflow-y: auto; background: var(--surface-muted); padding: 0 24px 24px;
+    > .title { flex-shrink: 0; min-height: 64px; border-bottom: 1px solid var(--border-color); font-size: 1.4rem; .icon { color: var(--text-muted); } }
+    > .content { width: 100%; max-width: 720px; flex-grow: 0; padding: 32px 0; gap: 24px; justify-content: flex-start; }
+    .journey-heading { h1 { font-size: clamp(2.8rem, 5vw, 4rem); font-weight: 800; letter-spacing: -1.4px; margin: 8px 0 12px; } p { color: var(--text-muted); line-height: 1.6; font-size: 1.5rem; } .journey-eyebrow { font-size: 1.1rem; letter-spacing: 2px; font-weight: 800; } }
+    .top-content { background: var(--surface); border: 1px solid var(--border-color); border-radius: 22px; padding: 24px; }
+    .top-buttons { flex-direction: row; flex-wrap: wrap; > button { flex: 1; } }
+    .success-btn { min-height: 56px; font-size: 1.8rem; }
+    .mod-list-container .mod-item { background: var(--surface-muted); border-color: var(--border-color); .select-btn, .download-btn { background: #ffdc00; color: #20242b; } }
+}
+.game-select-section { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.game-select-section .game-btn {
+    opacity: 1; max-width: none !important; width: 100%; overflow: hidden; border: 2px solid var(--border-color);
+    border-radius: 18px; color: var(--text-primary); background: var(--surface-muted); padding: 0; cursor: pointer;
+    img { width: 100%; height: 120px; object-fit: cover; }
+    .game-name-wrapper { padding: 14px; gap: 6px; }
+    .game-name { font-size: 1.4rem; text-transform: none; font-weight: 700; }
+    &.is-selected { border-color: #b49200; box-shadow: 0 0 0 3px #ffdc0050; .game-name-wrapper { background: #ffdc00; color: #20242b; } }
+}
+.section-device-info { width: 100%; max-width: 1000px; margin: auto; height: 100dvh; overflow-y: auto; padding-bottom: 24px; .steps { border-radius: 20px; background: var(--surface-muted); border: 1px solid var(--border-color); } }
+.settings-panel {
+    position: fixed; inset: 0; z-index: 3000;
+    .settings-title { padding: 8px 24px; }
+    .menu-list { padding: 12px max(20px, calc((100vw - 840px) / 2)) 32px; gap: 16px; }
+    .option.setting { border-radius: 16px; background: var(--surface-muted); padding: 18px; font-size: 1.5rem; min-height: 64px; gap: 12px; }
+    .selector { background: var(--surface-raised); border: 1px solid var(--border-color); }
+    .panel-description { color: var(--text-muted); font-size: 1.3rem; }
+}
+.popup-window, .connect-window { border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-hud); max-width: calc(100vw - 24px); }
+.game-information {
+    padding: 8px 18px; border-bottom: 1px solid var(--border-color); height: var(--top-bar-height); background: var(--surface); box-shadow: var(--shadow-hud);
+    .road-perspective { display: none; }
+    .truck-speed-div { min-width: 86px; padding: 0; gap: 6px; }
+    .truck-speed { font-size: 3rem; font-weight: 800; }
+    .km-h { color: var(--text-muted); }
+    .game-time { background: var(--surface-muted); border: 0; padding: 7px 12px; }
+    .fuel-amount, .sleep-div { font-size: 1.4rem; }
+}
+.option-btn { min-width: 48px; min-height: 48px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-hud); border: 1px solid var(--border-color); color: var(--text-primary); }
+.card {
+    background: var(--surface); border: 0; border-radius: 22px; box-shadow: var(--shadow-hud); height: auto; min-height: 108px; overflow: hidden;
+    .turn-directions { background: #ffdc00; color: #20242b; padding: 12px 18px; }
+    .turn-info { padding: 12px 18px; margin: 0; gap: 12px; flex-wrap: wrap; p:first-child { font-size: 2.1rem; font-weight: 800; } p:last-child { font-size: 1.4rem; } }
+}
+.card .direction-icon { fill: #20242b; stroke: #20242b; }
+.bottom-sheet { border: 1px solid var(--border-color); border-bottom: 0; border-radius: 28px 28px 0 0; box-shadow: var(--shadow-hud); .drag-pill { background: var(--border-color); } .separator { background: var(--border-color); } .full-stats .stat-block .label { color: var(--text-muted); } .icon-dist, .icon-eta { color: var(--text-muted) !important; } }
+.compact-trip-progress { border: 1px solid var(--border-color); border-radius: 18px 0 0 18px; padding: 10px 14px; box-shadow: var(--shadow-hud); }
+.speed-limit-sign { background: white; box-shadow: var(--shadow-hud); }
+@media (min-width: 900px) {
+    .card { width: 300px; left: 80px; top: calc(var(--top-bar-height) + 18px); transform: none; }
+    .bottom-sheet { width: 440px; left: 24px; bottom: 20px; border-radius: 24px; border-bottom: 1px solid var(--border-color); }
+    .speed-limit-sign { left: auto; right: 24px; bottom: 28px; }
+}
+@media (max-width: 520px) {
+    .section-mobile-menu { padding: 0 16px 16px; .top-content { padding: 16px; } }
+    .game-select-section .game-btn img { height: 100px; }
+    .game-select-section .game-btn .game-name-wrapper { padding: 10px; }
+    .game-information { padding: 8px; .gas-sleep { gap: 8px; } .sleep-div { min-width: auto; } .game-time { min-width: 0; padding: 5px; font-size: 1.2rem; } }
+    .card { width: calc(100% - 152px); min-height: 96px; .turn-info { padding: 10px 12px; } }
+    .settings-panel .option.setting { flex-wrap: wrap; }
+    .theme-controls { padding: 16px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    .section-mobile-menu > .content { padding-top: 16px; }
+    .card { min-height: 80px; .turn-directions { padding: 6px; } }
+    .bottom-sheet { max-height: calc(100dvh - 76px); overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+}
+
+/* Navigation HUD: keep these rules local to the map rather than changing settings screens. */
+:root body .map-ui-layer {
+    .card {
+        top: calc(var(--top-bar-height) + 12px); left: 70px; right: 70px;
+        width: auto; max-width: 440px; min-height: 112px; height: auto;
+        transform: none; border-radius: 22px; overflow: hidden;
+        background: linear-gradient(120deg, #071d3c, #183f78); color: #fff;
+        box-shadow: 0 6px 22px #071d3c38;
+    }
+    .card .primary-turn { display: flex; align-items: center; gap: 12px; min-height: 112px; padding: 15px 20px; }
+    .card .icon-wrapper { flex: 0 0 64px; width: 64px; height: 64px; }
+    .card .direction-icon { fill: #fff; stroke: #fff; }
+    .card .turn-info { display: block; min-width: 0; padding: 0; margin: 0; line-height: 1.1; }
+    .card .turn-info p:first-child { font-size: clamp(3.6rem, 7vw, 5.2rem); font-weight: 800; letter-spacing: -1px; white-space: nowrap; }
+    .card .turn-info p:first-child span { font-size: .48em; margin-left: 3px; }
+    .card .turn-info p:last-child { margin-top: 5px; font-size: 1.5rem; font-weight: 500; overflow-wrap: anywhere; }
+    .left-buttons, .hud-buttons { top: calc(var(--top-bar-height) + 12px); gap: 9px; }
+    .option-btn { border: 0; border-radius: 15px; min-width: 48px; min-height: 48px; justify-content: center; }
+    .bottom-sheet { background: var(--surface); color: var(--text-primary); }
+    .compact-trip-progress {
+        top: -120px; left: 12px; right: 12px; width: calc(100% - 24px); height: 108px;
+        padding: 20px 20px 14px; border: 0; border-radius: 20px;
+        background: var(--surface); color: var(--text-primary); cursor: pointer;
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .trip-handle { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 42px; height: 5px; border-radius: 8px; background: #999; }
+    .trip-details { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 2px; line-height: 1.05; }
+    .trip-details strong { font-size: 3rem; font-weight: 800; }
+    .trip-details small { font-size: 1.5rem; }
+    .trip-details > span { color: var(--text-muted); font-size: 1.5rem; }
+    .speed-limit-sign { bottom: 145px; left: 16px; }
+}
+:root[data-theme='night'] body .map-ui-layer {
+    .compact-trip-progress, .option-btn { background: #17191c; color: #f5f5f5; }
+}
+@media (min-width: 900px) {
+    :root body .map-ui-layer {
+        .card { left: 78px; right: auto; width: 360px; }
+        .compact-trip-progress { left: 0; width: 100%; }
+        .speed-limit-sign { left: auto; right: 24px; bottom: 28px; }
+    }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    :root body .map-ui-layer {
+        .card { left: 70px; width: 280px; min-height: 76px; }
+        .card .primary-turn { min-height: 76px; padding: 8px 14px; }
+        .card .icon-wrapper { flex-basis: 48px; width: 48px; height: 48px; }
+        .card .turn-info p:first-child { font-size: 3rem; }
+        .compact-trip-progress { top: -80px; height: 72px; }
+        .speed-limit-sign { bottom: 90px; }
+    }
+}
+:root body .map-ui-layer {
+    .card { overflow: visible; background: none; box-shadow: none; }
+    .card .primary-turn { border-radius: 22px; background: linear-gradient(120deg, #071d3c, #183f78); box-shadow: 0 6px 22px #071d3c38; }
+    .card:has(.secondary-turn) .primary-turn { border-bottom-left-radius: 0; }
+    .card .secondary-turn { display: flex; align-items: center; gap: 8px; width: fit-content; min-width: 150px; padding: 5px 16px; border-radius: 0 0 18px 18px; background: #19477f; color: white; box-shadow: 0 6px 16px #071d3c30; font-size: 2.5rem; font-weight: 800; }
+    .card .secondary-turn .icon-wrapper { flex-basis: 35px; width: 35px; height: 35px; }
+    .card .secondary-turn small { font-size: .55em; margin-left: 3px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    :root body .map-ui-layer .card .secondary-turn { padding: 2px 10px; font-size: 1.8rem; }
+}
+:root body .map-ui-layer .bottom-sheet.is-hidden { bottom: 0; }
+:root body .map-ui-layer {
+    .trip-destination { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; max-width: 90%; padding: 5px 12px; border-radius: 20px; background: var(--surface); color: var(--text-muted); font-size: 1.25rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 8px #0002; }
+    .bottom-sheet:not(.is-hidden) .sheet-body { padding: 20px 22px max(20px, env(safe-area-inset-bottom)); }
+    .bottom-sheet .dest-name, .bottom-sheet .full-stats .value { color: var(--text-primary); }
+    .bottom-sheet .hide-sheet-btn { color: var(--text-primary); background: var(--surface-muted); }
+    .bottom-sheet .chevron-icon { color: currentColor; }
+    .bottom-sheet .start-btn { background: #0867e9; color: #fff; }
+    .bottom-sheet .stop-btn { background: var(--surface-muted); color: var(--text-primary); }
+}
+:root body .map-ui-layer .bottom-sheet.is-hidden { overflow: visible; }
+@media (max-width: 899px) and (orientation: portrait) {
+    :root body .map-ui-layer {
+        .card { left: 12px; right: 12px; max-width: none; }
+        .left-buttons { top: calc(var(--top-bar-height) + 180px); }
+        .hud-buttons { top: auto; bottom: 155px; }
+    }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    :root body .map-ui-layer {
+        .card { left: max(64px, env(safe-area-inset-left)); width: min(42vw, 360px); }
+        .compact-trip-progress { left: max(64px, env(safe-area-inset-left)); right: auto; width: min(42vw, 360px); }
+        .hud-buttons { right: max(10px, env(safe-area-inset-right)); }
+    }
+}
+/* Place the speed readout beneath the guidance, keeping the other telemetry in the top bar. */
+:root body .map-ui-layer:not(.has-route-preview) {
+    .game-information { justify-content: flex-end; }
+    .truck-info { position: absolute; top: calc(var(--top-bar-height) + 176px); left: 78px; width: 72px; z-index: 1; }
+    .truck-speed-div { width: 100%; min-width: 0; height: 72px; flex-direction: column; gap: 0; color: #fff; filter: drop-shadow(0 1px 2px #000); }
+    .truck-speed { font-size: 6rem; line-height: 1; -webkit-text-stroke: 3px #030303; paint-order: stroke fill; }
+    .km-h { align-self: center; margin-bottom: 0; color: #fff; opacity: 1; line-height: 1; }
+}
+:root body .map-ui-layer .game-information.status-hidden { background: transparent; box-shadow: none; border: 0; pointer-events: none; }
+:root body .map-ui-layer:not(.has-route-preview):has(.speed-limit-sign.square) .truck-info { width: 60px; }
+@media (max-width: 899px) and (orientation: portrait) {
+    :root body .map-ui-layer:not(.has-route-preview) .truck-info { left: 17px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    :root body .map-ui-layer:not(.has-route-preview) .truck-info { top: calc(var(--top-bar-height) + 130px); left: max(70px, env(safe-area-inset-left)); }
+}
+/* The preview has its own back, waypoint and settings controls. */
+:root body .map-ui-layer.has-route-preview .left-buttons { display: none; }
+@media (orientation: portrait), (max-width: 639px) {
+    :root body .map-ui-layer.has-route-preview .hud-buttons { top: calc(var(--top-bar-height) + 78px); bottom: auto; }
+}
+/* The two metrics are primary text; only their labels use the muted color. */
+:root body .map-ui-layer .trip-summary .trip-details .trip-metrics { color: var(--text-primary); font-size: inherit; }
+:root body .map-ui-layer .trip-summary .trip-details .trip-remaining { color: var(--text-muted); font-size: .8em; }
+:root[data-theme='night'] body .map-ui-layer .trip-summary { background: #17191c; color: #f5f5f5; }
+/* Keep transient route notices clear of the destination and turn cards. */
+:root body .map-ui-layer.has-route-preview .notification-container { top: calc(var(--top-bar-height) + 76px); }
+:root body .map-ui-layer.has-guidance .notification-container { top: calc(var(--top-bar-height) + 224px); }
+@media (orientation: landscape) and (min-width: 640px) {
+    :root body .map-ui-layer.has-route-preview .notification-container,
+    :root body .map-ui-layer.has-guidance .notification-container { top: calc(var(--top-bar-height) + 12px); left: auto; right: 75px; width: auto; }
+}
+
+/* Keep controls clear of the route summary and the status bar. */
+:root body .map-ui-layer {
+    .landing-button { position: absolute; z-index: 2; top: 4px; left: max(10px, env(safe-area-inset-left)); min-width: 48px; min-height: 48px; }
+    .settings-top-button { position: absolute; z-index: 2; top: 4px; left: calc(max(10px, env(safe-area-inset-left)) + 48px); min-width: 48px; min-height: 48px; }
+    .game-information { padding-left: max(66px, calc(env(safe-area-inset-left) + 56px)); }
+    .hud-buttons { top: auto; right: max(10px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+:root body .map-ui-layer.has-status-bar:not(.has-route-preview):not(.has-guidance) {
+    .landing-button, .settings-top-button { background: transparent; border: 0; border-radius: 0; box-shadow: none; color: var(--text-primary); }
+}
+@media (orientation: portrait) {
+    :root body .map-ui-layer.has-guidance .hud-buttons { bottom: max(155px, calc(env(safe-area-inset-bottom) + 145px)); }
+    :root body .map-ui-layer:not(.has-route-preview) .speed-limit-sign { top: calc(var(--top-bar-height) + 254px); bottom: auto; left: 17px; right: auto; }
+    :root body .map-ui-layer.has-route-preview .hud-buttons { top: auto; bottom: max(45dvh, 155px); }
+}
+@media (orientation: landscape) and (min-width: 640px) {
+    :root body .map-ui-layer.has-guidance .card { left: max(16px, env(safe-area-inset-left)); right: auto; width: min(43vw, 440px); }
+    :root body .map-ui-layer:not(.has-route-preview) {
+        .truck-info { top: calc(var(--top-bar-height) + 8px); left: auto; right: max(10px, env(safe-area-inset-right)); }
+        .speed-limit-sign { top: calc(var(--top-bar-height) + 86px); bottom: auto; left: auto; right: max(10px, env(safe-area-inset-right)); }
+    }
+}
+@media (orientation: landscape) and (min-width: 900px) and (min-height: 501px) {
+    :root body .map-ui-layer.has-guidance .card:has(.secondary-turn) { min-height: 160.5px; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+    :root body .map-ui-layer:not(.has-route-preview) {
+        .truck-info { width: 54px; }
+        .truck-speed-div { height: 58px; }
+        .truck-speed { font-size: 4.5rem; }
+        .speed-limit-sign { top: calc(var(--top-bar-height) + 72px); }
+        .speed-limit-sign.circle, .speed-limit-sign.square { width: 54px; height: 54px; }
+        .speed-limit { font-size: 2.6rem; }
+    }
+    :root body .map-ui-layer.has-guidance {
+        .hud-buttons .option-btn { min-width: 40px; min-height: 40px; width: 40px; height: 40px; }
+        .hud-buttons { gap: 5px; }
+    }
+    :root body .map-ui-layer:not(.has-route-preview):has(.speed-limit-sign.square) .truck-info { width: 54px; }
+}

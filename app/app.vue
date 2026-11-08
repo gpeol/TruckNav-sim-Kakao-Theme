@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { KeepAwake } from "@capacitor-community/keep-awake";
 
+useThemeLifecycle();
+
 onMounted(async () => {
     const { initSettings } = useSettings();
     initSettings();
@@ -25,4 +27,5 @@ onMounted(async () => {
 
 <style lang="scss">
 @use "~/assets/scss/global/global";
+@use "~/assets/scss/global/navigation-theme";
 </style>

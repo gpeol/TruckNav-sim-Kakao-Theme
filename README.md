@@ -162,3 +162,7 @@ Thanks for the **[scs-sdk-plugin](https://github.com/RenCloud/scs-sdk-plugin)**.
 ---
 
 *Drive safe, and happy trucking!* 
+
+## Navigation UI theme
+
+카카오내비에서 착안한 반응형 UI와 자동 주야간 테마의 사용 방법 및 검증 결과는 [UI 테마 문서](docs/UI_THEME.md)를 확인하세요.

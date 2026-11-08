@@ -13,6 +13,34 @@
     "publish": null,
     "extraResources": [
         {
+            "from": "../scripts/tmp-nearby-source.mjs",
+            "to": "tmp-nearby-source.mjs"
+        },
+        {
+            "from": "../scripts/tmp-nearby-reader.ps1",
+            "to": "tmp-nearby-reader.ps1"
+        },
+        {
+            "from": "../scripts/truckersmp-traffic-source.mjs",
+            "to": "truckersmp-traffic-source.mjs"
+        },
+        {
+            "from": "../scripts/game-route-source.mjs",
+            "to": "game-route-source.mjs"
+        },
+        {
+            "from": "../scripts/ets2-route-reader.ps1",
+            "to": "ets2-route-reader.ps1"
+        },
+        {
+            "from": "../scripts/ets2-route-validation.ps1",
+            "to": "ets2-route-validation.ps1"
+        },
+        {
+            "from": "../scripts/licenses/ETS2LA-plugin-MIT.txt",
+            "to": "licenses/ETS2LA-plugin-MIT.txt"
+        },
+        {
             "from": "bin",
             "to": "bin",
             "filter": ["**/*"]

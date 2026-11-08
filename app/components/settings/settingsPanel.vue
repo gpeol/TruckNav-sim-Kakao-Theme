@@ -3,16 +3,20 @@ type settingsView = "main" | "general" | "appearance" | "navigation";
 
 const { t } = useTranslations();
 
-const props = defineProps<{ closePanel: () => void }>();
+const props = defineProps<{ closePanel: () => void; directAppearance?: boolean }>();
 
 const currentView = ref<settingsView>("main");
+const returnDirectlyToMap = ref(false);
 
-function setView(view: settingsView) {
+function setView(view: settingsView, direct = false) {
     currentView.value = view;
+    returnDirectlyToMap.value = direct;
 }
 
+defineExpose({ setView });
+
 function handleBack() {
-    if (currentView.value === "main") {
+    if (currentView.value === "main" || returnDirectlyToMap.value) {
         props.closePanel();
     } else {
         currentView.value = "main";
@@ -21,18 +25,20 @@ function handleBack() {
 </script>
 
 <template>
-    <div class="settings-panel">
+    <div class="settings-layer" :class="{ 'is-direct': directAppearance }">
+      <div v-if="directAppearance" class="settings-scrim" aria-hidden="true" @click="closePanel"></div>
+      <div class="settings-panel" :role="directAppearance ? 'dialog' : undefined" :aria-modal="directAppearance ? 'true' : undefined" :aria-label="directAppearance ? t('settings.appearance') : undefined">
         <div class="settings-title">
-            <div class="icon-btn" v-on:click="handleBack">
+            <button type="button" class="icon-btn" :aria-label="t('common.back')" @click="handleBack">
                 <Icon name="lucide:arrow-left" size="26" />
-            </div>
+            </button>
 
             <div class="title-icon">
-                <Icon name="lucide:settings" size="38" />
+                <Icon :name="directAppearance ? 'lucide:palette' : 'lucide:settings'" size="38" />
 
                 <div>
-                    <p class="panel-title">{{ t("settings.title") }}</p>
-                    <p class="panel-description">
+                    <p class="panel-title">{{ t(directAppearance ? "settings.appearance" : "settings.title") }}</p>
+                    <p v-if="!directAppearance" class="panel-description">
                         {{ t("settings.description") }}
                     </p>
                 </div>
@@ -87,7 +93,7 @@ function handleBack() {
 
                 <Appearance
                     v-else-if="currentView === 'appearance'"
-                    class="menu-list"
+                    class="menu-list appearance-settings"
                     key="appearance"
                 />
 
@@ -98,6 +104,7 @@ function handleBack() {
                 />
             </Transition>
         </div>
+      </div>
     </div>
 </template>
 

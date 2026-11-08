@@ -1,3 +1,5 @@
+import { mapFontFamily } from "~/utils/mapFontFamily";
+import { applyMapTheme } from "~/utils/mapTheme";
 import type { Map as MapLibreGl, StyleSpecification } from "maplibre-gl";
 import {
     blendWithBg,
@@ -12,6 +14,7 @@ export async function initializeMap(
     container: HTMLElement,
 ): Promise<MapLibreGl> {
     const { settings, activeSettings } = useSettings();
+    const { mapPalette } = useNavigationTheme();
 
     const baseUrl = window.location.origin;
 
@@ -77,7 +80,7 @@ export async function initializeMap(
                 type: "background",
                 paint: {
                     "background-color":
-                        activeSettings.value.backgroundColor ?? "#24467b",
+                        mapPalette.value.backgroundColor,
                 },
             },
             {
@@ -349,7 +352,7 @@ export async function initializeMap(
             layout: {
                 "text-field": ["get", "name"],
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-size": 13,
                 "text-anchor": "center",
@@ -448,7 +451,7 @@ export async function initializeMap(
             layout: {
                 "text-field": ["get", "name"],
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-size": 15,
                 "text-anchor": "bottom",
@@ -477,7 +480,7 @@ export async function initializeMap(
                 "text-field": ["get", "name"],
                 "text-size": 18,
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-anchor": "bottom",
                 "text-offset": [0, -0.3],
@@ -503,7 +506,7 @@ export async function initializeMap(
                 "text-field": ["get", "name"],
                 "text-size": 20,
                 "text-font": [
-                    activeSettings.value.fontFamily || "Commissioner",
+                    mapFontFamily(activeSettings.value.fontFamily),
                 ],
                 "text-anchor": "bottom",
                 "text-offset": [0, -0.3],
@@ -519,6 +522,11 @@ export async function initializeMap(
             maxzoom: 6,
         });
     });
+
+    const refreshTheme = () => applyMapTheme(map, mapPalette.value);
+    map.on("load", refreshTheme);
+    const stopThemeWatch = watch(mapPalette, refreshTheme);
+    map.once("remove", stopThemeWatch);
 
     return map;
 }

@@ -48,7 +48,7 @@
 
     &.is-selected {
         border-color: var(--theme-color);
-        background-color: rgba($secondaryColor, 20%);
+        background-color: color-mix(in srgb, var(--border-color) 20%, transparent);
     }
 
     @include for-tablet {

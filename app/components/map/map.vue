@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import { ref, onMounted, shallowRef, Transition } from "vue";
+import { mapFontFamily } from "~/utils/mapFontFamily";
 import "maplibre-gl/dist/maplibre-gl.css";
 import maplibregl from "maplibre-gl";
 import { usePlatform } from "~/composables/Platform";
 import {
     blendWithBg,
-    darkenColor,
     lightenColor,
 } from "~/assets/utils/shared/colors";
 import { generateTruckIcon } from "~/assets/utils/map/markers";
+import { convertEts2ToGeo } from "~/assets/utils/map/converters";
+import { usePreviewGameRoute } from "~/composables/PreviewGameRoute";
 
 defineProps<{ goHome: () => void }>();
 
@@ -16,6 +18,8 @@ defineProps<{ goHome: () => void }>();
 const mapEl = shallowRef<HTMLElement | null>(null);
 const map = shallowRef<maplibregl.Map | null>(null);
 const isSettingsPanelOpened = ref(false);
+const isAppearanceOverlay = ref(false);
+const settingsPanelRef = ref<{ setView: (view: "main" | "appearance", direct?: boolean) => void } | null>(null);
 const isClickingEnabled = ref(true);
 const isAddingStopMode = ref(false);
 
@@ -47,10 +51,15 @@ const {
     scale,
     averageSpeed,
     destinationCompany,
+    rawTelemetry,
 } = useEtsTelemetry();
+const failedGameRouteKey = ref("");
+const { gameRouteWaypoints, gameRoutePoints, gameRouteKey } = usePreviewGameRoute(rawTelemetry, failedGameRouteKey);
+const gameRouteOwned = ref(false);
+let appliedGameRouteKey = "";
 
 // Map Areas Data
-const { loadLocationData, findDestinationCoords, mapScaleConfig } =
+const { loadLocationData, findDestinationCoords, getGameLocationName, mapScaleConfig } =
     useCityData();
 
 // Check Platform
@@ -67,6 +76,7 @@ const {
     isNavigating,
     initCameraListeners,
     followTruck,
+    showRouteOverview,
     startNavigationMode,
     stopNavigationMode,
     initMarker,
@@ -84,6 +94,10 @@ const {
     destinationName,
     routeDistance,
     routeEta,
+    currentRoutePath,
+    currentRouteIndex,
+    routeProgress,
+    routeStatsCache,
     isCalculating: isCalculatingRoute,
     isWorkerReady,
     initWorkerData,
@@ -95,11 +109,19 @@ const {
     waypointList,
     removeWaypointAtIndex,
     findBestWaypointInsertionIndex,
-} = useRouteController(map, adjacency, nodeCoords, stopNavigationMode);
+} = useRouteController(map, adjacency, nodeCoords, stopNavigationMode, gameRouteOwned);
 
 // Settings Controller
 const { activeSettings, settings } = useSettings();
 const { t } = useTranslations();
+const { trafficSegments } = useTruckersMpTraffic(map, currentRoutePath, currentRouteIndex, routeStatsCache);
+useTmpNearby(map);
+const currentLocationName = ref('');
+let locationTimer: ReturnType<typeof setInterval> | null = null;
+function updateCurrentLocation() {
+    if (!gameConnected.value || !isTruckSpawned.value || !truckCoords.value) { currentLocationName.value = ''; return; }
+    currentLocationName.value = getGameLocationName(...truckCoords.value);
+}
 
 let uiTimer: ReturnType<typeof setTimeout> | null = null;
 let routeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -113,6 +135,42 @@ const isTruckSpawned = computed(() => {
         (truckCoords.value[0] !== 0 || truckCoords.value[1] !== 0)
     );
 });
+watch([gameConnected, isTruckSpawned], updateCurrentLocation);
+
+// Match the validated game route to connected edges in the local road graph.
+watch(
+    [gameRouteKey, loading, isWorkerReady, isCalculatingRoute, isTruckSpawned, gameConnected],
+    async ([key, isLoading, workerReady, calculating, truckReady, connected]) => {
+        if (!key) {
+            appliedGameRouteKey = "";
+            failedGameRouteKey.value = "";
+            if (gameRouteOwned.value) {
+                gameRouteOwned.value = false;
+                currentJobKey.value = "";
+                clearRouteState(true);
+            }
+            return;
+        }
+        if (key === appliedGameRouteKey || isLoading || !workerReady || calculating || !truckReady || !connected || !truckCoords.value || !gameRouteWaypoints.value || !gameRoutePoints.value) return;
+        const stops = gameRouteWaypoints.value.map(([x, z]) => convertEts2ToGeo(x, z));
+        appliedGameRouteKey = key;
+        failedGameRouteKey.value = "";
+        if (!gameRouteOwned.value) clearRouteState(true);
+        gameRouteOwned.value = true;
+        currentJobKey.value = "";
+        waypointList.value = stops;
+        await handleMultiRouteCalculation(
+            truckCoords.value, truckHeading.value,
+            scale.value > 0 ? scale.value : mapScaleConfig.value.ruralScale,
+            averageSpeed.value, false, gameRoutePoints.value,
+        );
+        if (gameRouteKey.value === key && routeFound.value === false) {
+            gameRouteOwned.value = false;
+            clearRouteState(true);
+            failedGameRouteKey.value = key;
+        }
+    },
+);
 
 // We check if it has active job, if it has one, plot a route
 watch(
@@ -124,6 +182,8 @@ watch(
         loading,
         isWorkerReady,
         isTruckSpawned,
+        gameRouteKey,
+        failedGameRouteKey,
     ],
     async ([
         hasJob,
@@ -133,8 +193,11 @@ watch(
         isLoading,
         isWorkerReady,
         truckReady,
+        gameKey,
+        failedKey,
     ]) => {
         if (!truckCoords.value) return;
+        if (gameKey && gameKey !== failedKey) return;
         if (isLoading || !isWorkerReady || !isConnected || !truckReady) {
             currentJobKey.value = "";
             return;
@@ -172,9 +235,10 @@ watch(
 );
 
 watch(
-    [hasActiveJob, gameConnected, loading, isWorkerReady, isTruckSpawned],
+    [hasActiveJob, gameConnected, loading, isWorkerReady, isTruckSpawned, gameRouteKey, failedGameRouteKey],
     ([hasJob, isGameConnected, isLoading, isWorkerReady, truckReady]) => {
         if (!truckCoords.value) return;
+        if (gameRouteKey.value && gameRouteKey.value !== failedGameRouteKey.value) return;
         if (
             isLoading ||
             !isWorkerReady ||
@@ -215,59 +279,6 @@ watch(
 );
 
 watch(
-    () => activeSettings.value.backgroundColor,
-    async (newColor) => {
-        if (!map.value) return;
-
-        if (map.value.getLayer("background")) {
-            map.value.setPaintProperty(
-                "background",
-                "background-color",
-                newColor,
-            );
-        }
-    },
-);
-
-watch(
-    () => activeSettings.value.landColor,
-    async (newColor) => {
-        if (!map.value) return;
-
-        if (map.value.getLayer("water")) {
-            map.value.setPaintProperty("water", "fill-color", newColor);
-        }
-
-        if (map.value.getLayer("country-borders")) {
-            map.value.setPaintProperty(
-                "country-borders",
-                "fill-color",
-                darkenColor(newColor, 0.4),
-            );
-        }
-
-        if (map.value.getLayer("water-outline")) {
-            map.value.setPaintProperty(
-                "water-outline",
-                "line-color",
-                darkenColor(newColor, 0.4),
-            );
-        }
-    },
-);
-
-watch(
-    () => activeSettings.value.roadColor,
-    async (newColor) => {
-        if (!map.value) return;
-
-        if (map.value.getLayer("roads")) {
-            map.value.setPaintProperty("roads", "line-color", newColor);
-        }
-    },
-);
-
-watch(
     () => settings.value.truckMarkerSize,
     (newSize) => {
         if (newSize) {
@@ -290,13 +301,16 @@ watch(
 
         textLayers.forEach((layerId) => {
             if (map.value!.getLayer(layerId)) {
-                map.value!.setLayoutProperty(layerId, "text-font", [newFont]);
+                map.value!.setLayoutProperty(layerId, "text-font", [mapFontFamily(newFont)]);
             }
         });
     },
 );
 
 watch(routeFound, (newVal) => {
+    if (newVal === true && !isNavigating.value && currentRoutePath.value) {
+        showRouteOverview(currentRoutePath.value);
+    }
     if (newVal !== null) {
         if (uiTimer) clearTimeout(uiTimer);
 
@@ -309,12 +323,12 @@ watch(routeFound, (newVal) => {
 watch([loading, gameConnected], ([isLoading, isGameConnected]) => {
     if (!isLoading) {
         setTimeout(() => {
-            isCameraLocked.value = true;
+            if (!isRouteActive.value) isCameraLocked.value = true;
         }, 100);
 
         if (isGameConnected) {
             setTimeout(() => {
-                isCameraLocked.value = true;
+                if (!isRouteActive.value) isCameraLocked.value = true;
             }, 500);
         }
     }
@@ -324,12 +338,15 @@ watch(gameConnected, (isConnected) => {
     if (!map.value) return;
     if (!isConnected) {
         isCameraLocked.value = false;
-        clearRouteState();
+        if (isRouteActive.value || gameRouteOwned.value) clearRouteState(gameRouteOwned.value);
+        gameRouteOwned.value = false;
     }
 });
 
 onMounted(async () => {
+    locationTimer = setInterval(updateCurrentLocation, 10_000);
     await loadLocationData();
+    updateCurrentLocation();
     if (!mapEl.value) return;
     if (isElectron.value) {
         (window as any).electronAPI.setWindowSize(950, 700, true, true);
@@ -366,6 +383,8 @@ onMounted(async () => {
             if (!isClickingEnabled.value) return;
             if (!gameConnected.value) return;
             if (!truckCoords.value) return;
+
+            gameRouteOwned.value = false;
 
             const currentScale =
                 scale.value > 0 ? scale.value : mapScaleConfig.value.ruralScale;
@@ -405,6 +424,7 @@ onUnmounted(() => {
 
     if (routeTimer) clearTimeout(routeTimer);
     if (uiTimer) clearTimeout(uiTimer);
+    if (locationTimer) clearInterval(locationTimer);
 
     if (map.value) {
         map.value.remove();
@@ -482,11 +502,20 @@ const onToggleFullscreen = async () => {
 };
 
 const toggleSettingsPanel = () => {
+    if (!isSettingsPanelOpened.value) settingsPanelRef.value?.setView("main");
     isSettingsPanelOpened.value = !isSettingsPanelOpened.value;
+    isAppearanceOverlay.value = false;
+};
+
+const openAppearanceSettings = () => {
+    settingsPanelRef.value?.setView("appearance", true);
+    isAppearanceOverlay.value = true;
+    isSettingsPanelOpened.value = true;
 };
 
 const onCancelRoute = () => {
-    clearRouteState();
+    clearRouteState(gameRouteOwned.value);
+    gameRouteOwned.value = false;
     stopNavigationMode();
 };
 </script>
@@ -501,13 +530,13 @@ const onCancelRoute = () => {
 
         <div class="ui-safe-container">
             <Transition name="ui-layer-fade">
-                <div v-show="!isSettingsPanelOpened" class="map-ui-layer">
+                <div v-show="!isSettingsPanelOpened || isAppearanceOverlay" class="map-ui-layer" :class="{ 'has-guidance': isNavigating && activeSettings.hasTurnNavigation, 'has-route-preview': isRouteActive && !isNavigating, 'has-status-bar': settings.activeUiComponents.includes('topBar') }">
                     <Transition name="fade">
                         <LoadingScreen v-if="loading" :progress="progress" />
                     </Transition>
 
                     <TopBar
-                        v-show="settings.activeUiComponents.includes('topBar')"
+                        :show-status="settings.activeUiComponents.includes('topBar')"
                         :fuel="fuel"
                         :game-connected="gameConnected"
                         :game-time="gameTime"
@@ -517,15 +546,12 @@ const onCancelRoute = () => {
                         :is-web="isWeb"
                     />
 
-                    <div class="left-buttons">
-                        <HudButton :onClick="goHome">
-                            <Icon name="lucide:arrow-left" class="icon" />
-                        </HudButton>
-
-                        <HudButton :onClick="toggleSettingsPanel">
-                            <Icon name="lucide:settings" class="icon" />
-                        </HudButton>
-                    </div>
+                    <HudButton class="landing-button" :aria-label="t('common.selectGame')" :onClick="goHome">
+                        <Icon name="lucide:arrow-left" class="icon" />
+                    </HudButton>
+                    <HudButton v-if="!isRouteActive" class="settings-top-button" :aria-label="t('settings.title')" :onClick="toggleSettingsPanel">
+                        <Icon name="lucide:settings" class="icon" />
+                    </HudButton>
 
                     <ManeuverCard
                         v-show="
@@ -571,15 +597,16 @@ const onCancelRoute = () => {
                     />
 
                     <div class="hud-buttons">
-                        <HudButton v-if="isWeb" :onClick="onToggleFullscreen">
+                        <HudButton v-if="isWeb" :aria-label="t('theme.fullscreen')" :onClick="onToggleFullscreen">
                             <Icon name="lucide:fullscreen" class="icon" />
                         </HudButton>
 
-                        <HudButton :onClick="onResetNorth">
+                        <HudButton :aria-label="t('theme.north')" :onClick="onResetNorth">
                             <Icon name="lucide:compass" class="icon" />
                         </HudButton>
 
                         <HudButton
+                            :aria-label="t('theme.follow')"
                             :is-active="isAutoFollowEnabled"
                             :class="{ 'green-icon': isAutoFollowEnabled }"
                             :onClick="toggleAutoFollow"
@@ -593,6 +620,7 @@ const onCancelRoute = () => {
                         </HudButton>
 
                         <HudButton
+                            :aria-label="t('theme.tap')"
                             :is-active="isClickingEnabled"
                             :class="
                                 isClickingEnabled ? 'green-icon' : 'red-icon'
@@ -652,9 +680,15 @@ const onCancelRoute = () => {
                             :is-navigating="isNavigating"
                             :on-start-navigation="onStartNavigation"
                             :destination-name="destinationName"
+                            :current-location-name="currentLocationName"
                             v-model:is-sheet-hidden="isSheetHidden"
                             :route-distance="routeDistance"
                             :route-eta="routeEta"
+                            :route-progress="routeProgress"
+                            :traffic-segments="trafficSegments"
+                            :game-route-estimate="gameRouteOwned"
+                            :on-open-settings="openAppearanceSettings"
+                            :on-open-general-settings="toggleSettingsPanel"
                             :speed-limit="speedLimit"
                             :truck-speed="truckSpeed"
                             @update:add-stop-clicked="toggleAddStopClicked"
@@ -665,8 +699,10 @@ const onCancelRoute = () => {
 
             <Transition name="panel-pop">
                 <SettingsPanel
+                    ref="settingsPanelRef"
                     v-show="isSettingsPanelOpened"
                     :close-panel="toggleSettingsPanel"
+                    :direct-appearance="isAppearanceOverlay"
                 />
             </Transition>
         </div>

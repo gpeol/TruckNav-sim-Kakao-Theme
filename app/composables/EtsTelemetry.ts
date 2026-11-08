@@ -1,3 +1,4 @@
+import { isSecurePreviewDocument, telemetrySocketUrl } from "~/utils/previewTransport";
 import { Capacitor } from "@capacitor/core";
 import {
     getGameState,
@@ -50,6 +51,7 @@ let lastPosition: [number, number] | null = null;
 let headingOffset = 0;
 
 let socket: WebSocket | null = null;
+const rawTelemetry = shallowRef<TelemetryPacket | null>(null);
 
 function sendDiscordRpcState(payload: {
     game: string;
@@ -85,22 +87,28 @@ export function useEtsTelemetry() {
 
     let speedSamples: number[] = [];
     const maxSamples = 120;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
 
     function startTelemetry(onUpdate?: (data: TelemetryUpdate) => void) {
+        stopped = false;
         if (socket) return;
 
-        const ip = isCapacitor
-            ? settings.value.savedIP
-            : window.location.hostname;
-        const url = `ws://${ip}:30001`;
+        const url = telemetrySocketUrl(
+            window.location.hostname, settings.value.savedIP, isCapacitor,
+            isSecurePreviewDocument(), window.location.protocol, window.location.host,
+        );
 
-        socket = new WebSocket(url);
+        const connection = new WebSocket(url);
+        socket = connection;
 
-        socket.onopen = () => {
+        connection.onopen = () => {
+            if (socket !== connection || stopped) return;
             console.log("Connected to Bridge");
         };
 
-        socket.onmessage = (event) => {
+        connection.onmessage = (event) => {
+            if (socket !== connection || stopped) return;
             try {
                 const rawData = JSON.parse(event.data);
 
@@ -112,6 +120,7 @@ export function useEtsTelemetry() {
                 }
 
                 if (data) {
+                    rawTelemetry.value = data;
                     processData(data, onUpdate);
                 }
             } catch (e) {
@@ -119,19 +128,26 @@ export function useEtsTelemetry() {
             }
         };
 
-        socket.onclose = () => {
+        connection.onclose = () => {
+            if (socket !== connection) return;
             socket = null;
             resetDataOnDisconnected(onUpdate);
-            setTimeout(() => startTelemetry(onUpdate), 3000);
+            if (!stopped) reconnectTimer = setTimeout(() => { reconnectTimer = null; startTelemetry(onUpdate); }, 3000);
         };
     }
 
     function stopTelemetry() {
+        stopped = true;
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = null;
         if (socket) {
             socket.onclose = null;
+            socket.onmessage = null;
+            socket.onopen = null;
             socket.close();
             socket = null;
         }
+        resetDataOnDisconnected();
     }
 
     function processData(
@@ -221,6 +237,7 @@ export function useEtsTelemetry() {
         onUpdate?: (data: TelemetryUpdate) => void,
     ) {
         const wasConnected = gameState.gameConnected;
+        rawTelemetry.value = null;
         headingOffset = 0;
         lastPosition = null;
         speedSamples = [];
@@ -266,6 +283,7 @@ export function useEtsTelemetry() {
         ...toRefs(truckState),
         ...toRefs(gameState),
         ...toRefs(jobState),
+        rawTelemetry,
         startTelemetry,
         stopTelemetry,
     };

@@ -16,12 +16,27 @@ const props = defineProps<{
     active?: boolean;
     activeColor?: string;
     exitCount?: number | undefined;
+    exitClock?: number | undefined;
 }>();
+const fallbackIcon = computed(() => ({
+    depart: 'lucide:move-up', straight: 'lucide:move-up',
+    'sharp-left': 'lucide:corner-up-left', 'sharp-right': 'lucide:corner-up-right',
+    ferry: 'lucide:ship', destination: 'lucide:map-pin-check',
+} as Partial<Record<typeof props.type, string>>)[props.type]);
 </script>
 
 <template>
     <div class="icon-wrapper" :style="{ '--active-color': props.activeColor }">
-        <svg
+        <Icon v-if="fallbackIcon" :name="fallbackIcon" class="fallback-direction" />
+        <svg v-else-if="type === 'roundabout' && exitClock" viewBox="0 0 48 48" class="roundabout-direction" aria-hidden="true">
+            <circle cx="24" cy="24" r="10" />
+            <path d="M24 47V34" />
+            <g :transform="`rotate(${exitClock * 30} 24 24)`">
+                <path d="M24 14V8" />
+                <polygon class="roundabout-arrowhead" points="24,1 17,9 31,9" />
+            </g>
+        </svg>
+        <svg v-else
             viewBox="0 0 24 24"
             class="direction-icon"
             :class="{ 'is-active': active }"
@@ -121,7 +136,7 @@ const props = defineProps<{
         </svg>
 
         <span
-            v-if="props.type === 'roundabout' && exitCount"
+            v-if="props.type === 'roundabout' && exitCount && !exitClock"
             class="exit-number"
             :class="{ 'is-active': active }"
         >

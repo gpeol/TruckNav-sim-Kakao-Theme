@@ -6,6 +6,8 @@ import path from "node:path";
 const EXE_NAME = "TruckNavTelemetry.exe";
 
 export default defineNitroPlugin((nitroApp) => {
+    // A read-only preview must not start or stop the shared game bridge.
+    if (process.env.TRUCKNAV_PREVIEW_NO_TELEMETRY === "1") return;
     const rootDir = process.cwd();
     const serverExeDir = path.join(rootDir, "electron", "bin");
     const serverExePath = path.join(serverExeDir, EXE_NAME);

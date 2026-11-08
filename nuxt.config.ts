@@ -3,6 +3,8 @@ export default defineNuxtConfig({
     compatibilityDate: "2025-07-15",
     devtools: { enabled: false },
     ssr: false,
+    // Font families are bundled locally; keep builds independent of font APIs.
+    ui: { fonts: false },
     modules: ["@nuxt/icon", "@nuxt/ui"],
 
     css: ["~/assets/css/main.css", "~/assets/scss/global/_transitions.scss"],

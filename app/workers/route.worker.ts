@@ -10,6 +10,7 @@ import {
     smoothPath,
 } from "~/assets/utils/routing/algorithm";
 import type { MapScaleConfig } from "~/composables/CityData";
+import { roundaboutClockFromEdges } from "~/assets/utils/routing/directions";
 
 let cityNodes: WorkerCityArea[] | null = null;
 let geometryF32: Float32Array | null = null;
@@ -18,6 +19,41 @@ let workerScaleConfig: MapScaleConfig = {
     urbanScale: 3,
     hasUkRule: true,
 };
+
+function routeManeuvers(sequence: number[]) {
+    const maneuvers = new Int8Array(sequence.length);
+    const exits = new Int8Array(sequence.length);
+    const clocks = new Int8Array(sequence.length);
+    for (let i = 0; i < sequence.length - 1; i++) {
+        const edge = adjacency?.get(sequence[i]!)?.find(e => e.to === sequence[i + 1]);
+        const type = edge?.maneuverType || 0;
+        let exit = edge?.exitNumber || 0;
+        if (type === 3 && exit === -3) {
+            let skipped = 0;
+            exit = 0;
+            for (let j = i + 1; j < sequence.length - 1; j++) {
+                const neighbors = adjacency?.get(sequence[j]!) || [];
+                const next = neighbors.find(e => e.to === sequence[j + 1]);
+                if (!next || next.maneuverType !== 3) break;
+                if (next.exitNumber === -2) { exit = skipped + 1; break; }
+                if (next.exitNumber !== -1) break;
+                skipped += neighbors.filter(e => e.maneuverType === 3 && e.exitNumber === -2 && e.to !== sequence[j + 1]).length;
+            }
+        }
+        maneuvers[i] = type;
+        exits[i] = exit;
+    }
+    for (let i = 1; i < sequence.length - 1; i++) {
+        if (maneuvers[i] !== 3 || maneuvers[i - 1] === 3) continue;
+        let end = i + 1;
+        while (end < sequence.length - 1 && maneuvers[end] === 3 && exits[end - 1] !== -2) end++;
+        if (end >= sequence.length - 1) continue;
+        const approach = adjacency?.get(sequence[i - 1]!)?.find(e => e.to === sequence[i]);
+        const departure = adjacency?.get(sequence[end]!)?.find(e => e.to === sequence[end + 1]);
+        clocks[i] = roundaboutClockFromEdges(geometryF32, approach, departure) || 0;
+    }
+    return { maneuvers, exits, clocks };
+}
 
 class TypedNodeCoordsMap {
     private array: Float64Array;
@@ -265,67 +301,7 @@ self.onmessage = async (e: MessageEvent) => {
                     nodeKms[i] = finalStatsCache[bestIdx * 3]!;
                 }
 
-                const sequenceManeuvers = new Int8Array(
-                    result.nodeSequence.length,
-                );
-                const sequenceExits = new Int8Array(result.nodeSequence.length);
-
-                for (let i = 0; i < result.nodeSequence.length - 1; i++) {
-                    const u = result.nodeSequence[i]!;
-                    const v = result.nodeSequence[i + 1]!;
-                    const edge = adjacency.get(u)?.find((e) => e.to === v);
-
-                    let mType = edge ? edge.maneuverType || 0 : 0;
-                    let extNum = edge ? edge.exitNumber || 0 : 0;
-
-                    if (mType === 3) {
-                        if (extNum === -3) {
-                            let skippedExits = 0;
-
-                            for (
-                                let j = i + 1;
-                                j < result.nodeSequence.length - 1;
-                                j++
-                            ) {
-                                const scanU = result.nodeSequence[j]!;
-                                const scanV = result.nodeSequence[j + 1]!;
-                                const scanEdge = adjacency
-                                    .get(scanU)
-                                    ?.find((e) => e.to === scanV);
-
-                                if (!scanEdge || scanEdge.maneuverType !== 3)
-                                    break;
-
-                                if (scanEdge.exitNumber === -2) {
-                                    extNum = skippedExits + 1;
-                                    break;
-                                } else if (scanEdge.exitNumber === -1) {
-                                    const neighbors =
-                                        adjacency.get(scanU) || [];
-                                    for (const n of neighbors) {
-                                        if (
-                                            n.maneuverType === 3 &&
-                                            n.exitNumber === -2 &&
-                                            n.to !== scanV
-                                        ) {
-                                            skippedExits++;
-                                        }
-                                    }
-                                } else {
-                                    break;
-                                }
-                            }
-
-                            if (extNum === -3) extNum = 1;
-                        } else if (extNum === -1 || extNum === -2) {
-                            mType = 0;
-                            extNum = 0;
-                        }
-                    }
-
-                    sequenceManeuvers[i] = mType;
-                    sequenceExits[i] = extNum;
-                }
+                const { maneuvers: sequenceManeuvers, exits: sequenceExits, clocks: sequenceRoundaboutClocks } = routeManeuvers(result.nodeSequence);
 
                 self.postMessage(
                     {
@@ -338,6 +314,7 @@ self.onmessage = async (e: MessageEvent) => {
                             nodeKms: nodeKms,
                             sequenceManeuvers: sequenceManeuvers,
                             sequenceExits: sequenceExits,
+                            sequenceRoundaboutClocks,
                         },
                     },
                     [
@@ -345,6 +322,7 @@ self.onmessage = async (e: MessageEvent) => {
                         nodeKms.buffer,
                         sequenceManeuvers.buffer,
                         sequenceExits.buffer,
+                        sequenceRoundaboutClocks.buffer,
                     ],
                 );
             } else {
@@ -373,6 +351,8 @@ self.onmessage = async (e: MessageEvent) => {
                 selectedGame,
                 sdkScale,
                 avgSpeed,
+                gameNodes,
+                gameStopNodes,
             } = payload;
 
             let currentStartId = startId;
@@ -384,12 +364,16 @@ self.onmessage = async (e: MessageEvent) => {
             const snappedNodeIds: number[] = [];
 
             // Loop through each segment sequentially
-            for (let i = 0; i < waypointsNodeGroups.length; i++) {
+            for (let i = 0; i < (gameNodes ? 1 : waypointsNodeGroups.length); i++) {
                 const targetCoords = waypointsCoords[i];
                 const candidateEnds = new Set<number>(waypointsNodeGroups[i]);
 
                 // Calculate current segment route
-                const segmentResult = calculateRoute(
+                const segmentResult = gameNodes ? {
+                    nodeSequence: gameNodes as number[],
+                    path: (gameNodes as number[]).map(id => nodeCoordsMapInstance!.get(id)!),
+                    endId: gameNodes[gameNodes.length - 1],
+                } : calculateRoute(
                     currentStartId,
                     candidateEnds,
                     currentHeading,
@@ -400,7 +384,10 @@ self.onmessage = async (e: MessageEvent) => {
                     targetCoords,
                 );
 
-                if (!segmentResult) {
+                if (!segmentResult || segmentResult.nodeSequence.length < 2 ||
+                    segmentResult.path.some(point => !point) ||
+                    (gameNodes && segmentResult.nodeSequence.slice(0, -1).some((id, index) =>
+                        !adjacency!.get(id)?.some(edge => edge.to === segmentResult.nodeSequence[index + 1])))) {
                     self.postMessage({ type: "RESULT", payload: null });
                     return;
                 }
@@ -461,7 +448,8 @@ self.onmessage = async (e: MessageEvent) => {
 
                 combinedNodeSequence.push(...segmentResult.nodeSequence);
                 combinedPathCoords.push(...segmentDisplayPath);
-                snappedNodeIds.push(segmentResult.endId);
+                if (gameNodes) snappedNodeIds.push(...gameStopNodes);
+                else snappedNodeIds.push(segmentResult.endId);
 
                 currentStartId = segmentResult.endId;
                 currentHeading = arrivalHeading;
@@ -503,22 +491,7 @@ self.onmessage = async (e: MessageEvent) => {
                 nodeKms[i] = finalStatsCache[bestIdx * 3]!;
             }
 
-            const sequenceManeuvers = new Int8Array(
-                combinedNodeSequence.length,
-            );
-            const sequenceExits = new Int8Array(combinedNodeSequence.length);
-            for (let i = 0; i < combinedNodeSequence.length - 1; i++) {
-                const u = combinedNodeSequence[i]!;
-                const v = combinedNodeSequence[i + 1]!;
-                const edge = adjacency.get(u)?.find((e) => e.to === v);
-
-                let mType = edge ? edge.maneuverType || 0 : 0;
-                let extNum = edge ? edge.exitNumber || 0 : 0;
-
-                if (mType === 3 && extNum === -3) extNum = 1;
-                sequenceManeuvers[i] = mType;
-                sequenceExits[i] = extNum;
-            }
+            const { maneuvers: sequenceManeuvers, exits: sequenceExits, clocks: sequenceRoundaboutClocks } = routeManeuvers(combinedNodeSequence);
 
             self.postMessage(
                 {
@@ -530,6 +503,7 @@ self.onmessage = async (e: MessageEvent) => {
                         nodeKms,
                         sequenceManeuvers,
                         sequenceExits,
+                        sequenceRoundaboutClocks,
                         snappedNodeIds,
                         endId: combinedNodeSequence[
                             combinedNodeSequence.length - 1
@@ -541,6 +515,7 @@ self.onmessage = async (e: MessageEvent) => {
                     nodeKms.buffer,
                     sequenceManeuvers.buffer,
                     sequenceExits.buffer,
+                    sequenceRoundaboutClocks.buffer,
                 ],
             );
         } catch (error) {
