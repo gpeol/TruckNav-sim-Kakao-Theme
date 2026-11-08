@@ -548,7 +548,7 @@ export const useRouteController = (
     ) {
         waypointList.value.splice(index, 1);
         snappedWaypointNodeIds.value.splice(index, 1);
-        if (waypointProgress) { waypointProgress.indices.splice(index, 1); waypointProgress.deadEnd.splice(index, 1); waypointProgress.reached.splice(index, 1); }
+        if (waypointProgress) { waypointProgress.indices.splice(index, 1); waypointProgress.points.splice(index, 1); waypointProgress.deadEnd.splice(index, 1); waypointProgress.reached.splice(index, 1); }
 
         if (waypointList.value.length === 0) {
             clearRouteState();

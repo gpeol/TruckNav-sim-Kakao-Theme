@@ -22,20 +22,22 @@ type State = {
     /** nodes appended since the previous state (detour intermediates + id) */
     added: number[];
     group: number;
+    /** Ordered recent nodes determine which future transitions remain legal. */
+    recent: number[];
     parent?: State;
 };
 
 /** U-turn guard window: number of most recent path nodes checked for revisits. */
 const RECENT_WINDOW = 16;
+// Ambiguous dense graphs can have exponentially many legal histories. Fail the
+// whole match (caller reports/falls back) instead of discarding an arbitrary
+// history and claiming a result from a lossy beam search.
+const MAX_STATES_PER_POINT = 4096;
+const MAX_TRANSITION_CHECKS = 2_000_000;
 
 /** True when `node` is among the last `window` nodes of the path ending at `s`. */
-function inRecent(s: State | undefined, node: number, window = RECENT_WINDOW): boolean {
-    let seen = 0;
-    for (let cur = s; cur && seen < window; cur = cur.parent) {
-        const a = cur.added;
-        for (let i = a.length - 1; i >= 0 && seen < window; i--, seen++) if (a[i] === node) return true;
-    }
-    return false;
+function inRecent(s: State, node: number): boolean {
+    return s.recent.includes(node);
 }
 
 /**
@@ -62,68 +64,73 @@ export function matchGameRouteNodes(
     const last = groups.length - 1;
     if (groups.length < 2 || !groups[0]!.length || !groups[last]!.length) return null;
 
-    let states = new Map<number, State>();
-    for (const c of groups[0]!) {
-        const prev = states.get(c.id);
-        const cost = c.distance ** 2;
-        if (!prev || prev.cost > cost) states.set(c.id, { id: c.id, cost, run: 0, added: [c.id], group: 0 });
-    }
-
-    const offer = (next: Map<number, State>, s: State) => {
-        const existing = next.get(s.id);
-        if (!existing || existing.cost > s.cost) next.set(s.id, s);
+    let exhausted = false, transitionChecks = 0;
+    const stateKey = (s: State) => `${s.id}|${s.run}|${s.recent.join(",")}`;
+    // Cost dominance is valid only when history and remaining skip budget agree.
+    const offer = (next: Map<string, State>, s: State) => {
+        const key = stateKey(s);
+        const existing = next.get(key);
+        if (!existing && next.size >= MAX_STATES_PER_POINT) { exhausted = true; return; }
+        if (!existing || existing.cost > s.cost) next.set(key, s);
     };
+    let states = new Map<string, State>();
+    for (const c of groups[0]!) {
+        const cost = c.distance ** 2;
+        offer(states, { id: c.id, cost, run: 0, added: [c.id], group: 0, recent: [c.id] });
+        if (exhausted) return null;
+    }
 
     for (let g = 1; g <= last; g++) {
         const wanted = new Map<number, number>();
         for (const c of groups[g]!) if (!wanted.has(c.id) || wanted.get(c.id)! > c.distance) wanted.set(c.id, c.distance);
-        const next = new Map<number, State>();
+        const next = new Map<string, State>();
 
         // 1) direct edge or same node
         for (const s of states.values()) {
+            if (++transitionChecks > MAX_TRANSITION_CHECKS || exhausted) return null;
             if (wanted.has(s.id)) {
                 offer(next, { ...s, cost: s.cost + wanted.get(s.id)! ** 2, run: 0, added: [], group: g, parent: s });
             }
             for (const e of adjacency.get(s.id) ?? []) {
+                if (++transitionChecks > MAX_TRANSITION_CHECKS || exhausted) return null;
                 const d = wanted.get(e.to);
                 if (d === undefined || inRecent(s, e.to)) continue;
-                offer(next, { id: e.to, cost: s.cost + d ** 2, run: 0, added: [e.to], group: g, parent: s });
+                offer(next, { id: e.to, cost: s.cost + d ** 2, run: 0, added: [e.to], group: g, parent: s,
+                    recent: [...s.recent.slice(-(RECENT_WINDOW - 1)), e.to] });
             }
         }
         // 2) skip this point (never the last one)
         if (g < last) {
             for (const s of states.values()) {
                 if (s.run >= maxSkips) continue;
-                // keep the cheaper of matched/skipped for this node; skipped states carry run+1
-                if (!next.has(s.id) || next.get(s.id)!.cost > s.cost + skipPenalty) {
-                    next.set(s.id, { ...s, cost: s.cost + skipPenalty, run: s.run + 1 });
-                }
+                offer(next, { ...s, cost: s.cost + skipPenalty, run: s.run + 1 });
+                if (exhausted) return null;
             }
         }
         // 3) short detour, only if nothing else connects
         if (!next.size) {
             for (const s of states.values()) {
-                const parents = new Map<number, number>([[s.id, -1]]);
-                let frontier = [s.id];
+                // A node-level visited set would lose different detour histories
+                // with different legal continuations after they converge.
+                let frontier: number[][] = [[]];
                 for (let hop = 1; hop <= maxDetourHops && frontier.length; hop++) {
-                    const nf: number[] = [];
-                    for (const n of frontier) for (const e of adjacency.get(n) ?? []) {
-                        // BFS parents prevent loops inside the detour; window guards against the path before it
-                        if (parents.has(e.to) || inRecent(s, e.to)) continue;
-                        parents.set(e.to, n);
-                        nf.push(e.to);
+                    const nf: number[][] = [];
+                    for (const path of frontier) for (const e of adjacency.get(path[path.length - 1] ?? s.id) ?? []) {
+                        if (++transitionChecks > MAX_TRANSITION_CHECKS || exhausted) return null;
+                        if (path.includes(e.to) || inRecent(s, e.to)) continue;
+                        const added = [...path, e.to];
+                        if (nf.length >= MAX_STATES_PER_POINT) return null;
+                        nf.push(added);
                         const d = wanted.get(e.to);
                         if (d === undefined) continue;
-                        const added: number[] = [];
-                        for (let x = e.to; x !== s.id; x = parents.get(x)!) added.push(x);
-                        added.reverse();
-                        offer(next, { id: e.to, cost: s.cost + d ** 2 + hop, run: 0, added, group: g, parent: s });
+                        offer(next, { id: e.to, cost: s.cost + d ** 2 + hop, run: 0, added, group: g, parent: s,
+                            recent: [...s.recent, ...added].slice(-RECENT_WINDOW) });
                     }
                     frontier = nf;
                 }
             }
         }
-        if (!next.size) return null;
+        if (!next.size || exhausted) return null;
         states = next;
     }
 

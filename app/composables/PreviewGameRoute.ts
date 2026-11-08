@@ -3,7 +3,7 @@ import { gameRouteWaypoints, type GameRouteSnapshot } from "~/utils/gameRoute";
 import type { TelemetryPacket } from "~/types";
 
 /** Read-only game destinations from the authenticated preview or Electron. */
-export function usePreviewGameRoute(telemetry: Ref<TelemetryPacket | null>) {
+export function usePreviewGameRoute(telemetry: Ref<TelemetryPacket | null>, failedKey: Readonly<Ref<string>>) {
     const snapshot = shallowRef<GameRouteSnapshot | null>(null);
     const tick = shallowRef(0);
     type Held = { waypoints: [number, number][]; points: [number, number, number][]; key: string; at: number };
@@ -19,7 +19,11 @@ export function usePreviewGameRoute(telemetry: Ref<TelemetryPacket | null>) {
             const pts = snapshot.value!.points as [number, number, number][];
             const xz = JSON.stringify(pts.map(([x, z]) => [x, z]));
             const wp = JSON.stringify(fresh);
-            const sameRoute = held && held.key.startsWith(wp + "|") && held.key.endsWith(xz.slice(1));
+            // Keep successful route identity during progress, but a failed
+            // match must retry when an unmatchable leading point disappears.
+            // Identical failed snapshots still produce the same fingerprint.
+            const sameRoute = held && failedKey.value !== held.key &&
+                held.key.startsWith(wp + "|") && held.key.endsWith(xz.slice(1));
             held = { waypoints: fresh, points: pts, key: sameRoute ? held!.key : `${wp}|${xz}`, at: Date.now() };
             return held;
         }

@@ -1,7 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildWaypointProgress, clampSearchLimit, countPassedWaypoints, dropWaypoints, gameDistSq, WAYPOINT_REACHED_M } from '../app/utils/waypointProgress.ts';
+import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { convertEts2ToGeo } from '../app/assets/utils/map/converters.ts';
+const require = createRequire(import.meta.url);
+const ts = require('typescript');
+// App imports use Nuxt's extensionless resolution; resolve this dependency only
+// in the isolated Node test module, without changing application compiler options.
+const source = await readFile(new URL('../app/utils/waypointProgress.ts', import.meta.url), 'utf8');
+const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
+    .replace('"../assets/utils/map/converters"', JSON.stringify(new URL('../app/assets/utils/map/converters.ts', import.meta.url).href));
+const { buildWaypointProgress, clampSearchLimit, countPassedWaypoints, dropWaypoints, gameDistSq, WAYPOINT_REACHED_M } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
 
 // Real ETS2 scale: built in game units (m) near a PowerShell.txt sample point, then projected.
 const X0 = 6000, Z0 = -21000;
@@ -101,4 +110,48 @@ test('destination is never pruned by waypoint progress', () => {
     const path = line(50);
     const stops = [path[49]];
     assert.deepEqual(drive(path, stops, path), stops);
+});
+
+test('sparse straight segment locates and visits the actual projected waypoint, not a distant vertex', () => {
+    const path = [g(0, 0), g(1000, 0), g(2000, 0)];
+    const stops = [g(500, 0), path[2]];
+    const p = buildWaypointProgress(path, stops);
+    assert.ok(Math.abs(p.indices[0] - 0.5) < 1e-8);
+    assert.ok(gameDistSq(p.points[0], stops[0]) < 1e-6);
+    assert.equal(countPassedWaypoints(p, path, 0, g(0, 0)), 0);
+    assert.equal(p.reached[0], false);
+    assert.equal(countPassedWaypoints(p, path, 0, g(520, 0)), 1);
+    dropWaypoints(p, 1);
+    assert.equal(p.points.length, 1);
+    assert.equal(countPassedWaypoints(p, path, 1, path[2]), 0);
+});
+
+test('waypoints in the same sparse segment are projected in order', () => {
+    const path = [g(0, 0), g(2000, 0)];
+    const p = buildWaypointProgress(path, [g(500, 0), g(1500, 0), path[1]]);
+    assert.ok(Math.abs(p.indices[0] - 0.25) < 1e-8);
+    assert.ok(Math.abs(p.indices[1] - 0.75) < 1e-8);
+    assert.equal(countPassedWaypoints(p, path, 0, g(510, 0)), 1);
+    assert.equal(countPassedWaypoints(p, path, 0, g(1510, 0)), 2);
+});
+
+test('detouring past a through waypoint preserves it until it was actually visited', () => {
+    const path = line(100);
+    const stops = [path[30], path[60], path[99]];
+    const p = buildWaypointProgress(path, stops);
+    assert.equal(p.deadEnd[0], false);
+    assert.equal(countPassedWaypoints(p, path, 55, g(55 * STEP, OFF_ROAD)), 0);
+    assert.equal(countPassedWaypoints(p, path, 55, path[55]), 0);
+    assert.equal(p.reached[0], false);
+    assert.deepEqual(drive(path, stops, [...path.slice(0, 20), g(55 * STEP, OFF_ROAD), path[55]]), stops);
+});
+
+test('repeated final-vertex stops retain the final anchor when no segments remain', () => {
+    const path = [g(0, 0), g(1000, 0)];
+    const p = buildWaypointProgress(path, [path[1], path[1], path[1]]);
+    assert.deepEqual(p.indices, [1, 1, 1]);
+    for (const point of p.points) assert.ok(gameDistSq(point, path[1]) < 1e-6);
+    assert.equal(countPassedWaypoints(p, path, 0, path[0]), 0);
+    assert.deepEqual(p.reached, [false, false, false]);
+    assert.equal(countPassedWaypoints(p, path, 0, path[1]), 2);
 });

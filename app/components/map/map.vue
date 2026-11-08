@@ -53,10 +53,10 @@ const {
     destinationCompany,
     rawTelemetry,
 } = useEtsTelemetry();
-const { gameRouteWaypoints, gameRoutePoints, gameRouteKey } = usePreviewGameRoute(rawTelemetry);
+const failedGameRouteKey = ref("");
+const { gameRouteWaypoints, gameRoutePoints, gameRouteKey } = usePreviewGameRoute(rawTelemetry, failedGameRouteKey);
 const gameRouteOwned = ref(false);
 let appliedGameRouteKey = "";
-const failedGameRouteKey = ref("");
 
 // Map Areas Data
 const { loadLocationData, findDestinationCoords, getGameLocationName, mapScaleConfig } =

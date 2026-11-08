@@ -1,4 +1,4 @@
-import { convertGeoToEts2 } from "../assets/utils/map/converters.ts";
+import { convertGeoToEts2, convertEts2ToGeo } from "../assets/utils/map/converters";
 
 export type LngLat = [number, number];
 
@@ -11,12 +11,12 @@ export const WAYPOINT_REACHED_M = 50;
 const REACHED_SQ = WAYPOINT_REACHED_M * WAYPOINT_REACHED_M;
 /** Exact-visit tolerance when locating a waypoint on the path (game units). */
 const EXACT_VISIT_M = 5;
-/** Path points beyond a waypoint that count as "surely passed" on a through road. */
-export const WAYPOINT_PASS_MARGIN = 10;
 
 export interface WaypointProgress {
-    /** Route path index of each waypoint, in order (last = destination). */
+    /** Fractional route position: segment index plus projection fraction. */
     indices: number[];
+    /** Waypoint anchors projected onto the route, independent of vertex density. */
+    points: LngLat[];
     /** True when the waypoint is a dead end (route turns back on itself). */
     deadEnd: boolean[];
     /** Truck came within WAYPOINT_REACHED_M of the waypoint. */
@@ -31,25 +31,41 @@ export function gameDistSq(a: LngLat, b: LngLat): number {
 }
 const sq = gameDistSq;
 
+function project(point: LngLat, a: LngLat, b: LngLat, minimum = 0) {
+    const [x, z] = convertGeoToEts2(...point);
+    const [ax, az] = convertGeoToEts2(...a);
+    const [bx, bz] = convertGeoToEts2(...b);
+    const dx = bx - ax, dz = bz - az;
+    const lengthSq = dx * dx + dz * dz;
+    let t = Math.max(minimum, Math.min(1, lengthSq ? ((x - ax) * dx + (z - az) * dz) / lengthSq : 0));
+    if (t < 1e-9) t = 0;
+    if (t > 1 - 1e-9) t = 1;
+    const px = ax + t * dx, pz = az + t * dz;
+    return { t, distanceSq: (x - px) ** 2 + (z - pz) ** 2, point: convertEts2ToGeo(px, pz) };
+}
+
 /** Locate waypoints on the path in order, so a coordinate visited twice resolves to the right visit. */
 export function buildWaypointProgress(path: readonly LngLat[], stops: readonly LngLat[]): WaypointProgress {
     const indices: number[] = [];
+    const points: LngLat[] = [];
     const deadEnd: boolean[] = [];
     let from = 0;
     for (const stop of stops) {
-        let best = from, bestD = Infinity;
-        for (let i = from; i < path.length; i++) {
-            const d = sq(path[i]!, stop);
-            if (d < bestD) { bestD = d; best = i; }
-            if (d <= EXACT_VISIT_M * EXACT_VISIT_M) break; // first exact visit wins
+        let best = from, bestD = Infinity, anchor = path[Math.floor(from)] ?? stop;
+        for (let i = Math.floor(from); i < path.length - 1; i++) {
+            const projection = project(stop, path[i]!, path[i + 1]!, Math.max(0, from - i));
+            if (projection.distanceSq < bestD) { bestD = projection.distanceSq; best = i + projection.t; anchor = projection.point; }
+            if (projection.distanceSq <= EXACT_VISIT_M * EXACT_VISIT_M) break; // first exact visit wins
         }
         indices.push(best);
-        const prev = path[best - 2] ?? path[best - 1];
-        const next = path[best + 2] ?? path[best + 1];
+        points.push(anchor);
+        const vertex = Math.round(best);
+        const prev = path[vertex - 2] ?? path[vertex - 1];
+        const next = path[vertex + 2] ?? path[vertex + 1];
         deadEnd.push(!!prev && !!next && best > 0 && best < path.length - 1 && sq(prev, next) < REACHED_SQ);
         from = best;
     }
-    return { indices, deadEnd, reached: stops.map(() => false) };
+    return { indices, points, deadEnd, reached: stops.map(() => false) };
 }
 
 /**
@@ -73,13 +89,17 @@ export function countPassedWaypoints(
 ): number {
     const last = p.indices.length - 1;
     for (let k = 0; k < last; k++) {
-        const pt = path[p.indices[k]!];
+        const pt = p.points[k];
         if (pt && sq(truck, pt) <= REACHED_SQ) p.reached[k] = true;
     }
     let passed = 0;
+    const segment = Math.max(0, Math.min(path.length - 2, Math.floor(routeIndex)));
+    const position = path[segment] && path[segment + 1]
+        ? segment + project(truck, path[segment]!, path[segment + 1]!).t : routeIndex;
     while (passed < last) {
         const idx = p.indices[passed]!;
-        const ok = routeIndex >= idx && (p.reached[passed] || (!p.deadEnd[passed] && routeIndex >= idx + WAYPOINT_PASS_MARGIN));
+        // A later nearest segment alone is not evidence that an off-route stop was visited.
+        const ok = position + 1e-9 >= idx && p.reached[passed];
         if (!ok) break;
         passed++;
     }
@@ -88,5 +108,5 @@ export function countPassedWaypoints(
 
 /** Drop the first n entries from progress (after removing them from the waypoint list). */
 export function dropWaypoints(p: WaypointProgress, n: number): void {
-    p.indices.splice(0, n); p.deadEnd.splice(0, n); p.reached.splice(0, n);
+    p.indices.splice(0, n); p.points.splice(0, n); p.deadEnd.splice(0, n); p.reached.splice(0, n);
 }
