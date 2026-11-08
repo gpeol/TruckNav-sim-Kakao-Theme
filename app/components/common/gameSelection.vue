@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 defineProps<{ width: number }>();
 const { settings, updateGlobal } = useSettings();
+const emit = defineEmits<{ gameSelected: [game: 'ats' | 'ets2' | null] }>();
 
 const selectCard = (game: "ats" | "ets2" | null) => {
+    emit('gameSelected', game);
     updateGlobal("selectedGame", game);
 };
 </script>

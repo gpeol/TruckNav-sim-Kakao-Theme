@@ -61,7 +61,9 @@ const goHome = () => {
     if (isElectron.value) currentView.value = "desktopHome";
     else currentView.value = "gameManager";
 };
-useLandingAutoStart(currentView, launchMap);
+const landingAutoStartBlocked = ref(false);
+const activeLandingBlocked = computed(() => currentView.value === 'gameManager' && landingAutoStartBlocked.value);
+const { selectManually } = useLandingAutoStart(currentView, launchMap, activeLandingBlocked);
 </script>
 
 <template>
@@ -79,6 +81,8 @@ useLandingAutoStart(currentView, launchMap);
             v-show="currentView === 'gameManager'"
             @go-back="goToDesktopIndex"
             @connected="launchMap"
+            @auto-start-blocked="landingAutoStartBlocked = $event"
+            @game-selected="selectManually"
         />
     </Transition>
 

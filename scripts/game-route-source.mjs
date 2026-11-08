@@ -14,10 +14,14 @@ export function createGameRouteSource({ spawnFn = spawn, now = Date.now } = {}) 
     const invalidate = () => { current = null; updatedAt = 0; };
     let child = null;
     let nextStart = 0;
+    let retryDelay = 5000;
+    const backoff = () => { invalidate(); nextStart = now() + retryDelay; retryDelay = Math.min(retryDelay * 2, 60000); };
     function start() {
     if (stopped || child || now() < nextStart) return;
     pending = '';
-    const owned = spawnFn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, '-ParentProcessId', String(process.pid)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    let owned;
+    try { owned = spawnFn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, '-ParentProcessId', String(process.pid)], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch { backoff(); return; }
     child = owned;
     let reported = false;
     child.stderr?.on('data', data => {
@@ -37,10 +41,12 @@ export function createGameRouteSource({ spawnFn = spawn, now = Date.now } = {}) 
                 if (!next || !['active', 'inactive', 'unavailable'].includes(next.state)) throw new Error();
                 current = next;
                 updatedAt = now();
+                // A valid active/inactive snapshot confirms the reader recovered.
+                if (next.state !== 'unavailable') retryDelay = 5000;
             } catch { invalidate(); }
         }
     });
-    const died = () => { if (child !== owned) return; invalidate(); child = null; nextStart = now() + 5000; };
+    const died = () => { if (child !== owned) return; child = null; backoff(); };
     child.on('error', died);
     child.on('exit', died);
     }

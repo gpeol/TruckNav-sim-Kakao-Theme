@@ -12,13 +12,16 @@ const { updateProfile, activeSettings } = useSettings();
 const { isMobile, isElectron } = usePlatform();
 const { t } = useTranslations();
 
-const emit = defineEmits(["connected", "goBack"]);
+const emit = defineEmits(["connected", "goBack", "autoStartBlocked", "gameSelected"]);
 
 const isDownloading = ref(false);
 const downloadProgress = ref(0);
 const downloadingId = ref<string | null>(null);
 const isBaseDownloaded = ref(false);
 const isModPanelOpen = ref(false);
+watch([isModPanelOpen, isDownloading], ([open, downloading]) => {
+    emit('autoStartBlocked', open || downloading);
+}, { flush: 'sync' });
 
 const downloadedMods = ref<Record<string, boolean>>({});
 
@@ -179,7 +182,7 @@ function toggleModPanel() {
             </header>
             <ThemeControls />
             <div class="top-content">
-                <GameSelection v-model="selectedGame" :width="150" />
+                <GameSelection v-model="selectedGame" :width="150" @game-selected="emit('gameSelected', $event)" />
                 <div
                     v-if="isBaseDownloaded && selectedGame"
                     class="top-buttons"
