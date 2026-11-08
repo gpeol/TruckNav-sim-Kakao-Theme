@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <utility>
+#include <map>
 
 static std::map<std::uint64_t, std::pair<TruckersMP_EventFn, void*>> listeners;
 static TruckersMP_Core core{};
@@ -11,6 +12,7 @@ static TruckersMP_Players playerTable{};
 static TruckersMP_PlayerHandle playerHandle{};
 static TruckersMP_Vehicle vehicleTable{};
 static TruckersMP_Render renderTable{};
+static bool playerThreeAvailable = true;
 
 static TruckersMP_EResult TMP_API add(TruckersMP_PluginContext*, uint64_t id, TruckersMP_EventFn fn, void* context) {
     listeners[id] = {fn, context}; return TruckersMP_Result_Ok;
@@ -22,6 +24,8 @@ static TruckersMP_EResult TMP_API declareVersion(TruckersMP_PluginContext*, uint
 static void TMP_API freeList(TruckersMP_PluginContext*, void* ptr) { std::free(ptr); }
 static bool TMP_API isConnected(TruckersMP_PluginContext*, bool* out) { *out = true; return true; }
 static bool TMP_API localPlayer(TruckersMP_PluginContext*, TruckersMP_Player_Handle* out) { out->m_value = 1; return true; }
+static bool TMP_API playerId(TruckersMP_PluginContext*, TruckersMP_Player_Handle self, int32_t* out) { *out = static_cast<int32_t>(self.m_value); return true; }
+static bool TMP_API playerById(TruckersMP_PluginContext*, int32_t id, TruckersMP_Player_Handle* out) { if (id == 3 && !playerThreeAvailable) return false; out->m_value = id; return true; }
 static bool TMP_API allPlayers(TruckersMP_PluginContext*, TruckersMP_List* out) {
     auto p = static_cast<TruckersMP_Player_Handle*>(std::malloc(2 * sizeof(TruckersMP_Player_Handle)));
     p[0].m_value = 1; p[1].m_value = 2;
@@ -51,6 +55,7 @@ int main() {
     core.AddListener = add; core.RemoveListener = remove;
     network.IsConnected = isConnected; playerTable.GetLocalPlayer = localPlayer;
     playerTable.GetAllPlayers = allPlayers; playerHandle.GetVehicle = getVehicle;
+    playerTable.GetPlayerByID = playerById; playerHandle.GetPlayerID = playerId;
     vehicleTable.GetPlacement = getPlacement;
     TruckersMP_Host host{}; host.m_size = sizeof(host); host.DeclareVersion = declareVersion;
     host.GetApi = getApi; host.Free = freeList;
@@ -66,6 +71,11 @@ int main() {
     fire(TRUCKERSMP_EVT_PLAYER_STREAM_OUT, &leave, sizeof(leave));
     lastRefresh = 0; fire(TRUCKERSMP_EVT_RENDER_PRE_RENDER);
     if (snapshot->count != 1 || snapshot->players[0].x != 300) return 4;
+    // A stream-out whose handle is already stale cannot provide an ID.
+    // Fresh lookup must still discard the old membership on the next frame.
+    playerThreeAvailable = false;
+    lastRefresh = 0; fire(TRUCKERSMP_EVT_RENDER_PRE_RENDER);
+    if (snapshot->count != 0 || players.count(3) != 0) return 7;
     fire(TRUCKERSMP_EVT_NETWORK_DISCONNECTED);
     if (snapshot->connected != 0 || snapshot->count != 0) return 5;
     truckersmp_shutdown();

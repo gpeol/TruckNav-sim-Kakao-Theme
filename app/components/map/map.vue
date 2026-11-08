@@ -56,6 +56,7 @@ const {
 const { gameRouteWaypoints, gameRoutePoints, gameRouteKey } = usePreviewGameRoute(rawTelemetry);
 const gameRouteOwned = ref(false);
 let appliedGameRouteKey = "";
+const failedGameRouteKey = ref("");
 
 // Map Areas Data
 const { loadLocationData, findDestinationCoords, getGameLocationName, mapScaleConfig } =
@@ -142,6 +143,7 @@ watch(
     async ([key, isLoading, workerReady, calculating, truckReady, connected]) => {
         if (!key) {
             appliedGameRouteKey = "";
+            failedGameRouteKey.value = "";
             if (gameRouteOwned.value) {
                 gameRouteOwned.value = false;
                 currentJobKey.value = "";
@@ -152,6 +154,7 @@ watch(
         if (key === appliedGameRouteKey || isLoading || !workerReady || calculating || !truckReady || !connected || !truckCoords.value || !gameRouteWaypoints.value || !gameRoutePoints.value) return;
         const stops = gameRouteWaypoints.value.map(([x, z]) => convertEts2ToGeo(x, z));
         appliedGameRouteKey = key;
+        failedGameRouteKey.value = "";
         if (!gameRouteOwned.value) clearRouteState(true);
         gameRouteOwned.value = true;
         currentJobKey.value = "";
@@ -161,7 +164,11 @@ watch(
             scale.value > 0 ? scale.value : mapScaleConfig.value.ruralScale,
             averageSpeed.value, false, gameRoutePoints.value,
         );
-        if (routeFound.value === false) clearRouteState(true);
+        if (gameRouteKey.value === key && routeFound.value === false) {
+            gameRouteOwned.value = false;
+            clearRouteState(true);
+            failedGameRouteKey.value = key;
+        }
     },
 );
 
@@ -176,6 +183,7 @@ watch(
         isWorkerReady,
         isTruckSpawned,
         gameRouteKey,
+        failedGameRouteKey,
     ],
     async ([
         hasJob,
@@ -186,9 +194,10 @@ watch(
         isWorkerReady,
         truckReady,
         gameKey,
+        failedKey,
     ]) => {
         if (!truckCoords.value) return;
-        if (gameKey) return;
+        if (gameKey && gameKey !== failedKey) return;
         if (isLoading || !isWorkerReady || !isConnected || !truckReady) {
             currentJobKey.value = "";
             return;
@@ -226,10 +235,10 @@ watch(
 );
 
 watch(
-    [hasActiveJob, gameConnected, loading, isWorkerReady, isTruckSpawned],
+    [hasActiveJob, gameConnected, loading, isWorkerReady, isTruckSpawned, gameRouteKey, failedGameRouteKey],
     ([hasJob, isGameConnected, isLoading, isWorkerReady, truckReady]) => {
         if (!truckCoords.value) return;
-        if (gameRouteKey.value) return;
+        if (gameRouteKey.value && gameRouteKey.value !== failedGameRouteKey.value) return;
         if (
             isLoading ||
             !isWorkerReady ||
@@ -527,7 +536,7 @@ const onCancelRoute = () => {
                     </Transition>
 
                     <TopBar
-                        v-show="settings.activeUiComponents.includes('topBar')"
+                        :show-status="settings.activeUiComponents.includes('topBar')"
                         :fuel="fuel"
                         :game-connected="gameConnected"
                         :game-time="gameTime"

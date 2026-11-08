@@ -1,3 +1,4 @@
+param([int]$ParentProcessId = 0)
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
 using System;
@@ -38,6 +39,7 @@ public static class TruckNavNearbyReader {
 '@
 
 while ($true) {
+    if ($ParentProcessId -gt 0 -and -not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) { break }
     try { $data = [TruckNavNearbyReader]::Read() }
     catch { $data = @{ state = 'unavailable'; vehicles = @() } }
     [Console]::Out.WriteLine((ConvertTo-Json -InputObject $data -Depth 4 -Compress))

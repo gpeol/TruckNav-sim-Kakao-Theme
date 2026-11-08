@@ -33,3 +33,17 @@ test('roundabout directions use the tagged exit and fall back when it is missing
     assert.deepEqual(turn.exitCoords, [1,1]);
     assert.equal(make([0,0,-1,0,0])[1].exitClock, undefined);
 });
+
+test('starting inside a roundabout does not announce a new entry or hide later roundabouts', () => {
+    for (const initialExit of [-1, -2]) {
+        const steps = generateDirectionsList(
+            [1,2,3,4,5,6,7], new Float32Array([0,1,2,3,4,5,6]),
+            new Int8Array([3,3,0,3,3,0,0]), new Int8Array([initialExit,-2,0,2,-2,0,0]),
+            new Map([[1,[0,0]],[2,[0,1]],[3,[1,1]],[4,[2,1]],[5,[2,2]],[6,[3,2]],[7,[4,2]]]),
+        );
+        const roundabouts = steps.filter(step => step.type === 'roundabout');
+        assert.equal(roundabouts.length, 1);
+        assert.equal(roundabouts[0].id, 4);
+        assert.equal(roundabouts[0].exitCount, 2);
+    }
+});

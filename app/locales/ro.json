@@ -101,6 +101,7 @@
         "selectComponents": "Alegeți componentele",
         "textTheme": "Temă text",
         "theme": "Temă",
+        "mapAccent": "Culoare de accent a hărții",
         "title": "Setări",
         "truckMarkerSize": "Dimensiune Marker camion",
         "units": "Unități"

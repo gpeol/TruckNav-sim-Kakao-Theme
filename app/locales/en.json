@@ -101,6 +101,7 @@
         "selectComponents": "Select Components",
         "textTheme": "Text Theme",
         "theme": "Theme",
+        "mapAccent": "Map accent color",
         "title": "Settings",
         "truckMarkerSize": "Truck Marker Size",
         "units": "Units"

@@ -46,7 +46,7 @@ watch(() => activeSettings.value.themeColor, updatePreviewIcon, {
         <ThemeControls />
         <TrafficControls />
         <ColorOption
-            :option-title="t('settings.theme')"
+            :option-title="t('settings.mapAccent')"
             color-element="themeColor"
         >
             <template #icon>

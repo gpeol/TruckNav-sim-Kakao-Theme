@@ -87,7 +87,10 @@ export function generateDirectionsList(
     });
 
     let lastStepKm = 0;
-    let inRoundabout = false;
+    // An interior/exit edge at the start has no approach from which to give
+    // an entry instruction or count exits. Resume normal guidance after it.
+    let inRoundabout = sequenceManeuvers[0] === 3 &&
+        (sequenceExits[0] === -1 || sequenceExits[0] === -2);
 
     for (let i = 0; i < nodeSequence.length - 1; i++) {
         const curr = nodeSequence[i];

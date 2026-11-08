@@ -101,6 +101,7 @@
         "selectComponents": "구성 요소 선택",
         "textTheme": "글씨 테마",
         "theme": "테마",
+        "mapAccent": "지도 강조 색상",
         "title": "설정",
         "truckMarkerSize": "트럭 아이콘 크기",
         "units": "유닛"

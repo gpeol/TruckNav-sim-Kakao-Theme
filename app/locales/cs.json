@@ -101,6 +101,7 @@
         "selectComponents": "Vyber komponenty",
         "textTheme": "Vzhled textu",
         "theme": "Vzhled",
+        "mapAccent": "Barva zvýraznění mapy",
         "title": "Nastavení",
         "truckMarkerSize": "Velikost ukazatele vozidla",
         "units": "Jednotky"

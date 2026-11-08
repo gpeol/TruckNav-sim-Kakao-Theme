@@ -87,8 +87,11 @@ export function useEtsTelemetry() {
 
     let speedSamples: number[] = [];
     const maxSamples = 120;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
 
     function startTelemetry(onUpdate?: (data: TelemetryUpdate) => void) {
+        stopped = false;
         if (socket) return;
 
         const url = telemetrySocketUrl(
@@ -96,13 +99,16 @@ export function useEtsTelemetry() {
             isSecurePreviewDocument(), window.location.protocol, window.location.host,
         );
 
-        socket = new WebSocket(url);
+        const connection = new WebSocket(url);
+        socket = connection;
 
-        socket.onopen = () => {
+        connection.onopen = () => {
+            if (socket !== connection || stopped) return;
             console.log("Connected to Bridge");
         };
 
-        socket.onmessage = (event) => {
+        connection.onmessage = (event) => {
+            if (socket !== connection || stopped) return;
             try {
                 const rawData = JSON.parse(event.data);
 
@@ -122,20 +128,26 @@ export function useEtsTelemetry() {
             }
         };
 
-        socket.onclose = () => {
+        connection.onclose = () => {
+            if (socket !== connection) return;
             socket = null;
             resetDataOnDisconnected(onUpdate);
-            setTimeout(() => startTelemetry(onUpdate), 3000);
+            if (!stopped) reconnectTimer = setTimeout(() => { reconnectTimer = null; startTelemetry(onUpdate); }, 3000);
         };
     }
 
     function stopTelemetry() {
+        stopped = true;
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = null;
         if (socket) {
             socket.onclose = null;
+            socket.onmessage = null;
+            socket.onopen = null;
             socket.close();
             socket = null;
         }
-        rawTelemetry.value = null;
+        resetDataOnDisconnected();
     }
 
     function processData(

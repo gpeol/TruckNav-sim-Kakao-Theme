@@ -101,6 +101,7 @@
         "selectComponents": "Komponenten auswählen",
         "textTheme": "Text Design",
         "theme": "Design",
+        "mapAccent": "Kartenakzentfarbe",
         "title": "Einstellungen",
         "truckMarkerSize": "Truck Marker Größe",
         "units": "Einheiten"

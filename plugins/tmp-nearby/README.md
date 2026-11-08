@@ -3,7 +3,9 @@
 This read-only Windows x64 TruckersMP SDK plugin publishes only anonymous X/Z
 positions for players streamed into the current client. It does not write to
 the game or open a network port. The session-local shared mapping is restricted
-to its Windows owner and SYSTEM, is discarded on exit, and carries a monotonic
+to its Windows owner and SYSTEM, with explicit read access for the game's user
+SID so a non-elevated reader can read an elevated game's snapshot. It is
+discarded on exit and carries a monotonic
 timestamp so readers reject old data. If the mapping already exists, plugin
 initialization fails rather than attaching to it.
 

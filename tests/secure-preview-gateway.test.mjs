@@ -51,6 +51,8 @@ test('preview accepts only the owner and stays read-only', async () => {
         assert.equal((await request(port, '/', {headers: {...headers, 'sec-fetch-site':'cross-site'}})).status, 403);
         assert.equal((await request(port, '/api/uninstall-map', {method:'POST'})).status, 405);
         assert.equal((await request(port, '/api/download-map')).status, 403);
+        assert.equal((await request(port, '/%61pi/download-map')).status, 403);
+        assert.equal((await request(port, '/%2561pi/download-map')).status, 403);
         assert.equal((await request(port, '/maps/%2e%2e/api/uninstall-map')).status, 403);
         assert.equal(mutations, 0);
         const page = await request(port, '/');

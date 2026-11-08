@@ -209,6 +209,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [role='button']
     .truck-speed { font-size: 6rem; line-height: 1; -webkit-text-stroke: 3px #030303; paint-order: stroke fill; }
     .km-h { align-self: center; margin-bottom: 0; color: #fff; opacity: 1; line-height: 1; }
 }
+:root body .map-ui-layer .game-information.status-hidden { background: transparent; box-shadow: none; border: 0; pointer-events: none; }
 :root body .map-ui-layer:not(.has-route-preview):has(.speed-limit-sign.square) .truck-info { width: 60px; }
 @media (max-width: 899px) and (orientation: portrait) {
     :root body .map-ui-layer:not(.has-route-preview) .truck-info { left: 17px; }

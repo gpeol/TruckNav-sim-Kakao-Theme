@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { SafeArea, SystemBarsType } from "@capacitor-community/safe-area";
+import { useLandingAutoStart } from "~/composables/LandingAutoStart";
 
 const { isElectron, isMobile } = usePlatform();
 const { settings } = useSettings();
@@ -60,6 +61,7 @@ const goHome = () => {
     if (isElectron.value) currentView.value = "desktopHome";
     else currentView.value = "gameManager";
 };
+useLandingAutoStart(currentView, launchMap);
 </script>
 
 <template>

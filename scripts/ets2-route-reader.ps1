@@ -1,4 +1,4 @@
-param([switch]$Diagnostic)
+param([switch]$Diagnostic, [int]$ParentProcessId = 0)
 # Experimental, read-only route source for the explicitly verified ETS2 build below.
 # It opens no network port and never writes to the game process.
 # Route structure reference: ETS2LA/plugin, Copyright (c) 2024 Dario Wouters,
@@ -20,6 +20,7 @@ $verifiedHash = 'A938CB388121F9B884A2E1B0F048C230A7BC19638EF6D641A70775F8C7FEA95
 $expectedControllerCode = '488B05B927DA02488BF2488BF9488B80B03100004885C074'
 $expectedGpsCode = '488D88284100004885C974EC488B01488D542440FF90A000'
 $game = $null
+$hashCache = @{}
 $handle = [IntPtr]::Zero
 
 function Close-Game {
@@ -36,14 +37,17 @@ function Read-GameBytes([long]$address, [int]$length) {
 }
 function Bytes-Hex([byte[]]$bytes) { return [BitConverter]::ToString($bytes).Replace('-', '') }
 function File-Hash([string]$path) {
+  $info = Get-Item -LiteralPath $path
+  $cacheKey = "$path|$($info.Length)|$($info.LastWriteTimeUtc.Ticks)"
+  if ($script:hashCache.ContainsKey($cacheKey)) { return $script:hashCache[$cacheKey] }
   $file = [System.IO.File]::OpenRead($path)
   $hasher = [System.Security.Cryptography.SHA256]::Create()
-  try { return Bytes-Hex ($hasher.ComputeHash($file)) } finally { $hasher.Dispose(); $file.Dispose() }
+  try { $result = Bytes-Hex ($hasher.ComputeHash($file)); $script:hashCache[$cacheKey] = $result; return $result } finally { $hasher.Dispose(); $file.Dispose() }
 }
 function Connect-Game {
-  $matches = @(Get-Process -Name eurotrucks2 -ErrorAction SilentlyContinue)
-  if ($matches.Count -ne 1) { throw 'Game unavailable.' }
-  $candidate = $matches[0]
+  $gameProcesses = @(Get-Process -Name eurotrucks2 -ErrorAction SilentlyContinue)
+  if ($gameProcesses.Count -ne 1) { throw 'Game unavailable.' }
+  $candidate = $gameProcesses[0]
   if ($candidate.MainModule.FileVersionInfo.ProductVersion -ne '1.62.1' -or (File-Hash $candidate.MainModule.FileName) -ne $verifiedHash) { throw 'Unsupported game build.' }
   $script:handle = [TruckNavGameReader]::OpenProcess(0x1010, $false, $candidate.Id)
   if ($script:handle -eq [IntPtr]::Zero) { throw 'Read-only access unavailable.' }
@@ -111,6 +115,7 @@ function Read-Route {
 
 try {
   while ($true) {
+    if ($ParentProcessId -gt 0 -and -not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) { break }
     try { $snapshot = Read-Route } catch {
       if ($Diagnostic) { [Console]::Error.WriteLine($_.Exception.Message) }
       Close-Game

@@ -41,7 +41,7 @@ export function createPreviewGateway({ owner, hostname, httpsPort = 443, uiPort,
             let decoded = raw.split('?')[0];
             for (let i = 0; i < 2; i++) decoded = decodeURIComponent(decoded);
             if (decoded.includes('\\') || decoded.includes('\0') || /(^|\/)\.\.?($|\/)/.test(decoded)) return null;
-            return new URL(raw, 'http://localhost').pathname;
+            return decoded;
         } catch { return null; }
     }
 

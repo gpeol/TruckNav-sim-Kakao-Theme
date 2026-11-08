@@ -101,6 +101,7 @@
         "selectComponents": "Componenten selecteren",
         "textTheme": "Tekstthema",
         "theme": "Thema",
+        "mapAccent": "Accentkleur kaart",
         "title": "Instellingen",
         "truckMarkerSize": "Truckmarkergrootte",
         "units": "Eenheden"

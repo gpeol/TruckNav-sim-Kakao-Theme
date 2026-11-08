@@ -7,6 +7,7 @@ const props = defineProps<{
     restStopTime: string;
     gameTime: string;
     isWeb: boolean;
+    showStatus: boolean;
 }>();
 
 const { settings } = useSettings();
@@ -20,7 +21,7 @@ const fuelConverted = computed(() => literToUserUnits(props.fuel));
 </script>
 
 <template>
-    <div class="game-information" :class="{ 'is-native': !isWeb }">
+    <div class="game-information" :class="{ 'is-native': !isWeb, 'status-hidden': !showStatus }">
         <div class="truck-info">
             <div
                 v-show="settings.activeUiComponents.includes('speed')"
@@ -32,7 +33,7 @@ const fuelConverted = computed(() => literToUserUnits(props.fuel));
             </div>
         </div>
 
-        <div v-if="gameConnected" class="gas-sleep-time">
+        <div v-if="showStatus && gameConnected" class="gas-sleep-time">
             <div class="gas-sleep">
                 <div
                     v-show="settings.activeUiComponents.includes('fuel')"
@@ -71,7 +72,7 @@ const fuelConverted = computed(() => literToUserUnits(props.fuel));
             </p>
         </div>
 
-        <div v-else class="disconnected-div">
+        <div v-else-if="showStatus" class="disconnected-div">
             <p class="disconnected-message">{{ t("common.gameOffline") }}</p>
             <Icon name="lucide:wifi-off" class="disconnected-icon" />
         </div>
