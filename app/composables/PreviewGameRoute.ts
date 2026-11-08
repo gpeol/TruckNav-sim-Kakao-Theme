@@ -5,9 +5,31 @@ import type { TelemetryPacket } from "~/types";
 /** Read-only game destinations from the authenticated preview or Electron. */
 export function usePreviewGameRoute(telemetry: Ref<TelemetryPacket | null>) {
     const snapshot = shallowRef<GameRouteSnapshot | null>(null);
-    const waypoints = computed(() => gameRouteWaypoints(snapshot.value, telemetry.value));
-    const points = computed(() => waypoints.value ? snapshot.value!.points as [number, number, number][] : null);
-    const key = computed(() => points.value ? JSON.stringify([waypoints.value, points.value.map(([x, z]) => [x, z])]) : "");
+    const tick = shallowRef(0);
+    type Held = { waypoints: [number, number][]; points: [number, number, number][]; key: string; at: number };
+    let held: Held | null = null;
+    // A single unavailable read (e.g. "Route changed while reading") or a telemetry
+    // mismatch frame must not tear down the map route; keep the last valid route for
+    // HOLD_MS. Passing nodes trims the route prefix; that is not a new route.
+    const HOLD_MS = 6000;
+    const current = computed<Held | null>(() => {
+        void tick.value;
+        const fresh = gameRouteWaypoints(snapshot.value, telemetry.value);
+        if (fresh) {
+            const pts = snapshot.value!.points as [number, number, number][];
+            const xz = JSON.stringify(pts.map(([x, z]) => [x, z]));
+            const wp = JSON.stringify(fresh);
+            const sameRoute = held && held.key.startsWith(wp + "|") && held.key.endsWith(xz.slice(1));
+            held = { waypoints: fresh, points: pts, key: sameRoute ? held!.key : `${wp}|${xz}`, at: Date.now() };
+            return held;
+        }
+        if (snapshot.value?.state === "inactive" || String(telemetry.value?.game || "").toLowerCase() !== "ets2") held = null;
+        if (held && Date.now() - held.at > HOLD_MS) held = null;
+        return held;
+    });
+    const waypoints = computed(() => current.value?.waypoints ?? null);
+    const points = computed(() => current.value?.points ?? null);
+    const key = computed(() => current.value?.key ?? "");
     let socket: WebSocket | null = null;
     let retry: ReturnType<typeof setTimeout> | null = null;
     let expiry: ReturnType<typeof setInterval> | null = null;
@@ -78,6 +100,7 @@ export function usePreviewGameRoute(telemetry: Ref<TelemetryPacket | null>) {
         } else return;
         expiry = setInterval(() => {
             if (Date.now() - receivedAt > 6000) clearSnapshot();
+            tick.value++;
         }, 1000);
     });
     onUnmounted(() => {
