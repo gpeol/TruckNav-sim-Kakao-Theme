@@ -13,7 +13,6 @@ export function useLandingAutoStart(view: Ref<string>, launch: () => void, block
     let lastSeen = 0;
     let detected: 'ets2' | 'ats' | null = null;
     let generation = 0;
-    let autoSelecting = false;
     let manualGame: 'ets2' | 'ats' | null = null;
     let inputRevision = 0;
     let checkingMap = false;
@@ -60,11 +59,8 @@ export function useLandingAutoStart(view: Ref<string>, launch: () => void, block
                 if (timer || checkingMap || Date.now() < nextMapCheck) return;
                 if (document.visibilityState !== 'visible' || blocked?.value) return;
                 if (manualGame && manualGame !== game) return;
-                autoSelecting = true;
-                try {
-                    selectGame(game);
-                    updateGlobal('selectedGame', game);
-                } finally { autoSelecting = false; }
+                selectGame(game);
+                updateGlobal('selectedGame', game);
                 if (settings.value.selectedGame !== game) return;
                 timer = setTimeout(async () => {
                     timer = null;
@@ -94,12 +90,8 @@ export function useLandingAutoStart(view: Ref<string>, launch: () => void, block
     onMounted(() => {
         events.forEach(event => window.addEventListener(event, input, { capture: true, passive: true }));
         document.addEventListener('visibilitychange', visibility);
-        // Synchronous observation distinguishes our own update from the real UI's
-        // updateGlobal call; useGameSelection mirrors that same setting.
-        watch(() => settings.value.selectedGame, game => {
-            if (autoSelecting || (view.value !== 'gameManager' && view.value !== 'desktopHome')) return;
-            selectManually(game);
-        }, { flush: 'sync' });
+        // Only the card's explicit gameSelected event records manual intent.
+        // Reactive changes also include settings hydration after child mount.
         if (blocked) watch(blocked, input, { flush: 'sync' });
         watch(view, start, { immediate: true });
     });

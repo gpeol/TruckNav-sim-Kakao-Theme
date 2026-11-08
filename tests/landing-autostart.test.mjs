@@ -90,7 +90,7 @@ test('an open socket with stale telemetry cannot trigger navigation', async () =
 test('input before detection still detects, manual selection is preserved, and missing-map checks are bounded', async () => {
     const early = fixture(); early.events.get('wheel')(); early.sockets[0].send('ets2');
     assert.equal(early.settings.value.selectedGame, 'ets2');
-    const manual = fixture(); manual.sockets[0].send('ets2'); manual.events.get('pointerdown')(); manual.settings.value.selectedGame = 'ats';
+    const manual = fixture(); manual.sockets[0].send('ets2'); manual.events.get('pointerdown')(); manual.selectManually('ats'); manual.settings.value.selectedGame = 'ats';
     await nextTick();
     for (let i = 0; i < 11; i++) { manual.sockets[0].send('ets2'); await manual.tick(1000); }
     assert.equal(manual.launches, 0); assert.equal(manual.selection.value, 'ats'); assert.equal(manual.settings.value.selectedGame, 'ats');
@@ -134,7 +134,7 @@ test('queued callbacks cannot change a replacement socket after reconnect or lan
 });
 
 test('manual selection before first detection persists with fresh packets and resets on landing re-entry', async () => {
-    const f = fixture(); f.events.get('pointerdown')(); f.settings.value.selectedGame = 'ats';
+    const f = fixture(); f.events.get('pointerdown')(); f.selectManually('ats'); f.settings.value.selectedGame = 'ats';
     await nextTick();
     for (let i = 0; i < 11; i++) { f.sockets[0].send('ets2'); await f.tick(1000); }
     assert.equal(f.launches, 0); assert.equal(f.settings.value.selectedGame, 'ats');
@@ -204,4 +204,22 @@ test('opening and closing a popup during map verification invalidates the queued
     await f.tick(9999); f.sockets[0].send('ets2'); await f.tick(0);
     assert.equal(f.launches, 0);
     await f.tick(1); assert.equal(f.launches, 1);
+});
+
+test('settings hydration after landing mounts is not a manual game selection', async () => {
+    for (const view of ['gameManager', 'desktopHome']) {
+        for (const earlierInput of [false, true]) {
+            const f = fixture(view);
+            if (earlierInput) f.events.get('pointermove')();
+            // initSettings in the parent mounted hook replaces the settings ref
+            // after the child's landing probe and watchers have been installed.
+            f.settings.value = { ...f.settings.value, selectedGame: 'ets2' };
+            await nextTick();
+            f.sockets[0].send('ats');
+            assert.equal(f.settings.value.selectedGame, 'ats');
+            await f.tick(9999); assert.equal(f.launches, 0);
+            f.sockets[0].send('ats'); await f.tick(1);
+            assert.equal(f.launches, 1);
+        }
+    }
 });

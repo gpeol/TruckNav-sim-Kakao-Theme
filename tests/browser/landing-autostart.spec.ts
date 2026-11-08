@@ -2,8 +2,8 @@ import { test, expect, type WebSocketRoute } from '@playwright/test';
 test.setTimeout(90000);
 
 for (const game of ['Ets2', 'Ats']) {
-    test(`landing detects ${game} and enters after idle timeout`, async ({ page }) => {
-        await page.addInitScript(() => localStorage.setItem('truck-nav-settings', JSON.stringify({ locale: 'ko' })));
+    test(`landing detects ${game} despite a different hydrated saved game and enters after idle timeout`, async ({ page }) => {
+        await page.addInitScript(savedGame => localStorage.setItem('truck-nav-settings', JSON.stringify({ locale: 'ko', selectedGame: savedGame })), game === 'Ets2' ? 'ats' : 'ets2');
         await page.route('**/api/map-status/**', route => route.fulfill({ json: { downloaded: true } }));
         await page.route('**/maps/**', route => route.fulfill({ json: [] }));
         let socket: WebSocketRoute | undefined;
