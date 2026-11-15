@@ -12,7 +12,8 @@ import { generateTruckIcon } from "~/assets/utils/map/markers";
 import { convertEts2ToGeo } from "~/assets/utils/map/converters";
 import { usePreviewGameRoute } from "~/composables/PreviewGameRoute";
 
-defineProps<{ goHome: () => void }>();
+const props = defineProps<{ goHome: (reason?: 'safe-driving-exit') => void }>();
+const onExitSafeDriving = () => props.goHome('safe-driving-exit');
 
 // MAP STATE
 const mapEl = shallowRef<HTMLElement | null>(null);
@@ -117,6 +118,8 @@ const { t } = useTranslations();
 const { trafficSegments } = useTruckersMpTraffic(map, currentRoutePath, currentRouteIndex, routeStatsCache);
 useTmpNearby(map);
 const currentLocationName = ref('');
+const mapUiElement = ref<HTMLElement | null>(null);
+useTripTelemetryLayout(mapUiElement);
 let locationTimer: ReturnType<typeof setInterval> | null = null;
 function updateCurrentLocation() {
     if (!gameConnected.value || !isTruckSpawned.value || !truckCoords.value) { currentLocationName.value = ''; return; }
@@ -530,12 +533,14 @@ const onCancelRoute = () => {
 
         <div class="ui-safe-container">
             <Transition name="ui-layer-fade">
-                <div v-show="!isSettingsPanelOpened || isAppearanceOverlay" class="map-ui-layer" :class="{ 'has-guidance': isNavigating && activeSettings.hasTurnNavigation, 'has-route-preview': isRouteActive && !isNavigating, 'has-status-bar': settings.activeUiComponents.includes('topBar') }">
+                <div v-show="!isSettingsPanelOpened || isAppearanceOverlay" ref="mapUiElement" class="map-ui-layer" :class="{ 'is-free-driving': !isRouteActive, 'is-route-guidance': isRouteActive && isNavigating, 'has-guidance': isNavigating && activeSettings.hasTurnNavigation, 'has-route-preview': isRouteActive && !isNavigating, 'has-status-bar': settings.activeUiComponents.includes('topBar') }">
                     <Transition name="fade">
                         <LoadingScreen v-if="loading" :progress="progress" />
                     </Transition>
 
                     <TopBar
+                        :is-free-driving="!isRouteActive"
+                        :current-location-name="currentLocationName"
                         :show-status="settings.activeUiComponents.includes('topBar')"
                         :fuel="fuel"
                         :game-connected="gameConnected"
@@ -546,11 +551,8 @@ const onCancelRoute = () => {
                         :is-web="isWeb"
                     />
 
-                    <HudButton class="landing-button" :aria-label="t('common.selectGame')" :onClick="goHome">
+                    <HudButton v-if="isRouteActive" class="landing-button" :aria-label="t('common.selectGame')" :onClick="() => props.goHome()">
                         <Icon name="lucide:arrow-left" class="icon" />
-                    </HudButton>
-                    <HudButton v-if="!isRouteActive" class="settings-top-button" :aria-label="t('settings.title')" :onClick="toggleSettingsPanel">
-                        <Icon name="lucide:settings" class="icon" />
                     </HudButton>
 
                     <ManeuverCard
@@ -658,6 +660,9 @@ const onCancelRoute = () => {
                         :truck-speed="truckSpeed"
                         :speed-limit="speedLimit"
                     />
+
+                    <FreeDriveBar v-if="!isRouteActive" @exit="onExitSafeDriving"
+                        @appearance="openAppearanceSettings" @settings="toggleSettingsPanel" />
 
                     <div class="warnings">
                         <WarningSlide

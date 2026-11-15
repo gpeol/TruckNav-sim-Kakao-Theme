@@ -5,6 +5,7 @@ import {
 import { getActiveMapFolder } from "~/assets/utils/map/helpers";
 import { type WorkerCityArea } from "~/assets/utils/routing/algorithm";
 import { getMapFileUrl } from "~/assets/utils/shared/fileManager";
+import { localizedCityName, localizedCityCountry } from "~/utils/koreanCityNames";
 
 // --- Types ---
 export interface ScsCityArea {
@@ -81,7 +82,7 @@ const loadedMapSource = ref<string | null>(null);
 const isLoaded = ref(false);
 
 export function useCityData() {
-    const { settings } = useSettings();
+    const { settings, activeSettings } = useSettings();
 
     async function fetchSafe<T>(url: string): Promise<T | null> {
         try {
@@ -296,8 +297,16 @@ export function useCityData() {
 
                 if (dist < minDistance) {
                     minDistance = dist;
-                    bestName = city.name;
-                    bestCountry = formatCountryToken(city.countryToken);
+                    bestName = localizedCityName(city, scsCitiesData.value, {
+                        locale: settings.value.locale,
+                        selectedGame: settings.value.selectedGame,
+                        activeMod: activeSettings.value.activeMod,
+                    });
+                    bestCountry = localizedCityCountry(city, scsCitiesData.value, {
+                        locale: settings.value.locale,
+                        selectedGame: settings.value.selectedGame,
+                        activeMod: activeSettings.value.activeMod,
+                    }) ?? formatCountryToken(city.countryToken);
                 }
             }
         }

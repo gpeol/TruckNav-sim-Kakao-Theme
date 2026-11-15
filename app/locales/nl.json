@@ -1,5 +1,13 @@
 {
-    "traffic": { "title": "TruckersMP-verkeer (schatting)", "description": "Schat routes waar meerdere voertuigen nauwelijks bewegen. Je locatie en route worden niet verzonden.", "choose": "Servers laden", "off": "Uit", "waiting": "Voertuigen worden gevolgd. Dit kan een minuut duren.", "ready": "Verkeersschatting staat aan.", "unavailable": "Verkeersgegevens zijn niet beschikbaar." },
+    "traffic": {
+        "title": "TruckersMP-verkeer (schatting)",
+        "description": "Schat routes waar meerdere voertuigen nauwelijks bewegen. Je locatie en route worden niet verzonden.",
+        "choose": "Servers laden",
+        "off": "Uit",
+        "waiting": "Voertuigen worden gevolgd. Dit kan een minuut duren.",
+        "ready": "Verkeersschatting staat aan.",
+        "unavailable": "Verkeersgegevens zijn niet beschikbaar."
+    },
     "trafficUnsupported": "Alleen beschikbaar met de standaard ETS2-kaart.",
     "common": {
         "back": "Terug",
@@ -177,7 +185,9 @@
         "arrivalGame": "Aankomst in het spel",
         "arrivalReal": "Verwachte aankomst",
         "remaining": "resterend",
-        "progress": "Routevoortgang"
+        "progress": "Routevoortgang",
+        "endSafeDriving": "Vrij rijden beëindigen",
+        "safeDrivingMenu": "Menu voor vrij rijden"
     },
     "directions": {
         "depart": "Head on route",

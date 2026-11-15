@@ -1,5 +1,13 @@
 {
-    "traffic": { "title": "TruckersMP 교통량 (추정)", "description": "선택한 서버에서 여러 차량의 이동이 거의 없는 경로 구간을 추정합니다. 내 위치와 경로는 전송하지 않습니다.", "choose": "서버 목록 불러오기", "off": "사용 안 함", "waiting": "차량 움직임을 관측하는 중입니다. 최대 1분이 걸릴 수 있습니다.", "ready": "교통량 추정이 켜져 있습니다.", "unavailable": "교통량 정보를 가져오지 못했습니다." },
+    "traffic": {
+        "title": "TruckersMP 교통량 (추정)",
+        "description": "선택한 서버에서 여러 차량의 이동이 거의 없는 경로 구간을 추정합니다. 내 위치와 경로는 전송하지 않습니다.",
+        "choose": "서버 목록 불러오기",
+        "off": "사용 안 함",
+        "waiting": "차량 움직임을 관측하는 중입니다. 최대 1분이 걸릴 수 있습니다.",
+        "ready": "교통량 추정이 켜져 있습니다.",
+        "unavailable": "교통량 정보를 가져오지 못했습니다."
+    },
     "trafficUnsupported": "기본 ETS2 지도에서만 사용할 수 있습니다.",
     "common": {
         "back": "뒤로",
@@ -177,7 +185,9 @@
         "arrivalGame": "게임 예상 도착",
         "arrivalReal": "실제 예상 도착",
         "remaining": "남음",
-        "progress": "경로 진행률"
+        "progress": "경로 진행률",
+        "endSafeDriving": "안전운전 종료",
+        "safeDrivingMenu": "안전운전 메뉴"
     },
     "directions": {
         "depart": "경로를 따라 출발하세요",

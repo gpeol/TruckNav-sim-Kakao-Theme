@@ -8,6 +8,8 @@ const props = defineProps<{
     gameTime: string;
     isWeb: boolean;
     showStatus: boolean;
+    isFreeDriving?: boolean;
+    currentLocationName?: string;
 }>();
 
 const { settings } = useSettings();
@@ -34,6 +36,7 @@ const fuelConverted = computed(() => literToUserUnits(props.fuel));
         </div>
 
         <div v-if="showStatus && gameConnected" class="gas-sleep-time">
+            <span v-if="isFreeDriving && currentLocationName" class="free-drive-location" :title="currentLocationName" :aria-label="t('routeUi.currentLocation') + ': ' + currentLocationName"><Icon name="lucide:map-pin" size="15" aria-hidden="true" /><span>{{ currentLocationName }}</span></span>
             <div class="gas-sleep">
                 <div
                     v-show="settings.activeUiComponents.includes('fuel')"
@@ -72,7 +75,7 @@ const fuelConverted = computed(() => literToUserUnits(props.fuel));
             </p>
         </div>
 
-        <div v-else-if="showStatus" class="disconnected-div">
+        <div v-else-if="showStatus && !isFreeDriving" class="disconnected-div">
             <p class="disconnected-message">{{ t("common.gameOffline") }}</p>
             <Icon name="lucide:wifi-off" class="disconnected-icon" />
         </div>

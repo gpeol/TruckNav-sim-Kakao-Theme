@@ -1,5 +1,13 @@
 {
-    "traffic": { "title": "Trafic TruckersMP (estimare)", "description": "Estimează porțiunile traseului unde mai multe vehicule aproape nu se mișcă. Locația și traseul nu sunt trimise.", "choose": "Încarcă serverele", "off": "Dezactivat", "waiting": "Se observă mișcarea vehiculelor. Poate dura un minut.", "ready": "Estimarea traficului este activă.", "unavailable": "Datele de trafic nu sunt disponibile." },
+    "traffic": {
+        "title": "Trafic TruckersMP (estimare)",
+        "description": "Estimează porțiunile traseului unde mai multe vehicule aproape nu se mișcă. Locația și traseul nu sunt trimise.",
+        "choose": "Încarcă serverele",
+        "off": "Dezactivat",
+        "waiting": "Se observă mișcarea vehiculelor. Poate dura un minut.",
+        "ready": "Estimarea traficului este activă.",
+        "unavailable": "Datele de trafic nu sunt disponibile."
+    },
     "trafficUnsupported": "Disponibil doar cu harta standard ETS2.",
     "common": {
         "back": "Înapoi",
@@ -177,7 +185,9 @@
         "arrivalGame": "Sosire în joc",
         "arrivalReal": "Sosire estimată",
         "remaining": "rămase",
-        "progress": "Progresul traseului"
+        "progress": "Progresul traseului",
+        "endSafeDriving": "Încheie conducerea liberă",
+        "safeDrivingMenu": "Meniu de conducere liberă"
     },
     "directions": {
         "depart": "Head on route",

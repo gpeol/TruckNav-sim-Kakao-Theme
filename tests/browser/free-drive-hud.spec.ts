@@ -42,24 +42,43 @@ for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }
         const speed = page.locator('.truck-info');
         const limit = page.locator('.speed-limit-sign');
         await expect(limit).toBeVisible();
-        const barRect = (await bar.boundingBox())!;
-        const backRect = (await back.boundingBox())!;
-        const settingsRect = (await settings.boundingBox())!;
-        expect(backRect.y).toBeGreaterThanOrEqual(barRect.y);
-        expect(backRect.y + backRect.height).toBeLessThanOrEqual(barRect.y + barRect.height + 1);
-        expect(Math.abs(settingsRect.x - (backRect.x + backRect.width))).toBeLessThanOrEqual(1);
-        expect(settingsRect.y).toBe(backRect.y);
-        expect(await settings.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
-        expect(await back.evaluate(el => getComputedStyle(el).boxShadow)).toBe('none');
-        await page.evaluate(() => { document.documentElement.dataset.theme = 'day'; });
-        expect(await settings.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
-        expect(await back.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+        await expect(page.locator('.landing-button')).toHaveCount(0);
+        await expect(page.locator('.settings-top-button')).toHaveCount(0);
+        expect(await bar.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+        expect(await bar.evaluate(el => getComputedStyle(el).boxShadow)).toBe('none');
         const before = { speed: await speed.boundingBox(), limit: await limit.boundingBox() };
         await page.locator('.map-ui-layer').evaluate(el => el.classList.add('has-guidance'));
         expect(await speed.boundingBox()).toEqual(before.speed);
         expect(await limit.boundingBox()).toEqual(before.limit);
         await page.locator('.map-ui-layer').evaluate(el => el.classList.remove('has-guidance'));
+        await page.getByRole('button', { name: '안전운전 메뉴', exact: true }).click();
         await settings.click();
         await expect(page.locator('.settings-panel')).toBeVisible();
     });
 }
+
+test('offline warning leaves free-drive controls usable on a short portrait screen', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 650 });
+    await page.addInitScript(() => localStorage.setItem('truck-nav-settings', JSON.stringify({ selectedGame: 'ets2', locale: 'ko' })));
+    await page.route('**/api/map-status/**', route => route.fulfill({ json: { downloaded: true } }));
+    await page.route('**/maps/**', route => route.fulfill({ json: [] }));
+    await page.routeWebSocket(/:30001/, () => {});
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Euro Truck Simulator 2' }).click();
+    await page.getByRole('button', { name: '내비게이션 시작' }).click();
+    const warning = page.locator('.route-warning');
+    await expect(warning).toBeVisible();
+    await expect(warning).toHaveAttribute('role', 'status');
+    await expect(warning).toContainText('게임');
+    const warningBox = (await warning.boundingBox())!;
+    const statusBox = (await page.locator('.game-information').boundingBox())!;
+    expect(warningBox.y).toBeGreaterThanOrEqual(12);
+    expect(warningBox.y).toBeLessThan(statusBox.y + statusBox.height);
+    await expect(page.locator('.disconnected-div')).toHaveCount(0);
+    await expect(page.locator('.landing-button')).toHaveCount(0);
+    for (const button of await page.locator('.hud-buttons .option-btn').all()) {
+        const box = (await button.boundingBox())!;
+        expect(warningBox.y + warningBox.height <= box.y || box.y + box.height <= warningBox.y ||
+            warningBox.x + warningBox.width <= box.x || box.x + box.width <= warningBox.x).toBeTruthy();
+    }
+});

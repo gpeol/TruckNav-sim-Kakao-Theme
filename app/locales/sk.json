@@ -1,5 +1,13 @@
 {
-    "traffic": { "title": "Premávka TruckersMP (odhad)", "description": "Odhaduje úseky trasy s viacerými takmer stojacimi vozidlami. Vaša poloha ani trasa sa neodosiela.", "choose": "Načítať servery", "off": "Vypnuté", "waiting": "Sleduje sa pohyb vozidiel. Môže to trvať minútu.", "ready": "Odhad premávky je zapnutý.", "unavailable": "Dopravné údaje nie sú dostupné." },
+    "traffic": {
+        "title": "Premávka TruckersMP (odhad)",
+        "description": "Odhaduje úseky trasy s viacerými takmer stojacimi vozidlami. Vaša poloha ani trasa sa neodosiela.",
+        "choose": "Načítať servery",
+        "off": "Vypnuté",
+        "waiting": "Sleduje sa pohyb vozidiel. Môže to trvať minútu.",
+        "ready": "Odhad premávky je zapnutý.",
+        "unavailable": "Dopravné údaje nie sú dostupné."
+    },
     "trafficUnsupported": "Dostupné iba so štandardnou mapou ETS2.",
     "common": {
         "back": "Späť",
@@ -177,7 +185,9 @@
         "arrivalGame": "Príchod v hre",
         "arrivalReal": "Odhadovaný príchod",
         "remaining": "zostáva",
-        "progress": "Priebeh trasy"
+        "progress": "Priebeh trasy",
+        "endSafeDriving": "Ukončiť voľnú jazdu",
+        "safeDrivingMenu": "Ponuka voľnej jazdy"
     },
     "directions": {
         "depart": "Head on route",
