@@ -59,18 +59,25 @@ test('alternates destination and refreshed current location without approximatio
     telemetry!.send(JSON.stringify(packet));
     await page.getByRole('button',{name:'내비게이션 시작',exact:true}).click();
     const summary=page.locator('.trip-summary');
-    await expect(summary.locator('.trip-destination')).toContainText('목적지 · Beta');
+    await expect(summary.locator('.trip-destination')).toHaveText('Beta');
+    await expect(summary.locator('.destination-flag')).toBeVisible();
+    await expect(summary).toHaveAttribute('aria-label', /목적지: Beta/);
     await expect(summary.locator('.trip-arrival')).toContainText('실제 예상 도착');
     await expect(summary.locator('.trip-arrival')).not.toContainText('~');
     await expect(summary.locator('.trip-remaining')).not.toContainText('~');
-    await expect(summary.locator('.trip-destination')).toContainText('현재 위치 · Alpha',{timeout:10000});
+    await expect(summary.locator('.trip-destination')).toHaveText('Alpha',{timeout:10000});
+    await expect(summary.locator('.destination-flag')).toHaveCount(0);
+    await expect(summary).toHaveAttribute('aria-label', /현재 위치: Alpha/);
     const [nx,nz]=world(1,1.08);packet.truck.current.position.x=nx;packet.truck.current.position.z=nz;
     telemetry!.send(JSON.stringify(packet));
-    await expect(summary.locator('.trip-destination')).toContainText('현재 위치 · Gamma',{timeout:5000});
-    await expect(summary.locator('.trip-destination')).toContainText('목적지 · Beta',{timeout:10000});
+    await expect(summary.locator('.trip-destination')).toHaveText('Gamma',{timeout:5000});
+    await expect(summary).toHaveAttribute('aria-label', /현재 위치: Gamma/);
+    await expect(summary.locator('.trip-destination')).toHaveText('Beta',{timeout:10000});
+    await expect(summary.locator('.destination-flag')).toBeVisible();
+    await expect(summary).toHaveAttribute('aria-label', /목적지: Beta/);
 });
 
-for (const viewport of [{width:390,height:844}, {width:844,height:390}, {width:812,height:375}, {width:1024,height:768}, {width:1440,height:900}]) {
+for (const viewport of [{width:390,height:844}, {width:844,height:390}, {width:812,height:375}, {width:844,height:300}, {width:667,height:260}, {width:1024,height:768}, {width:1440,height:900}]) {
     test(`route preview and menu use real route state at ${viewport.width}x${viewport.height}`, async ({page}) => {
         await page.setViewportSize(viewport);
         const errors:string[] = [];
@@ -138,6 +145,7 @@ for (const viewport of [{width:390,height:844}, {width:844,height:390}, {width:8
         }
         if (viewport.width > viewport.height) {
             const summaryBox = await summary.boundingBox();
+            expect(guidance!.y + guidance!.height).toBeLessThanOrEqual(summaryBox!.y);
             expect(Math.abs(summaryBox!.x - guidance!.x)).toBeLessThanOrEqual(1);
             expect(Math.abs(summaryBox!.width - guidance!.width)).toBeLessThanOrEqual(1);
             expect(truck!.x + truck!.width / 2).toBeGreaterThan(guidance!.x + guidance!.width);

@@ -54,16 +54,25 @@ const updateSystemBars = async () => {
 };
 
 const launchGameManager = () => (currentView.value = "gameManager");
-const launchMap = () => (currentView.value = "map");
+const safeDrivingExit = ref(false);
+const launchMap = () => {
+    safeDrivingExit.value = false;
+    currentView.value = "map";
+};
 const goToDesktopIndex = () => (currentView.value = "desktopHome");
 
-const goHome = () => {
+const goHome = (reason?: 'safe-driving-exit') => {
+    safeDrivingExit.value = reason === 'safe-driving-exit';
     if (isElectron.value) currentView.value = "desktopHome";
     else currentView.value = "gameManager";
 };
 const landingAutoStartBlocked = ref(false);
-const activeLandingBlocked = computed(() => currentView.value === 'gameManager' && landingAutoStartBlocked.value);
-const { selectManually } = useLandingAutoStart(currentView, launchMap, activeLandingBlocked);
+const activeLandingBlocked = computed(() => safeDrivingExit.value || (currentView.value === 'gameManager' && landingAutoStartBlocked.value));
+const { selectManually: recordManualSelection } = useLandingAutoStart(currentView, launchMap, activeLandingBlocked);
+const selectManually = (game: 'ets2' | 'ats' | null) => {
+    safeDrivingExit.value = false;
+    recordManualSelection(game);
+};
 </script>
 
 <template>

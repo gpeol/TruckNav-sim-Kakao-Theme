@@ -1,41 +1,25 @@
 <script lang="ts" setup>
-const props = defineProps<{
+defineProps<{
     showIf: boolean;
     resetOn?: boolean;
     text: string;
 }>();
 
-const isExpanded = ref(false);
-
-watch(
-    () => props.resetOn,
-    (newValue) => {
-        if (newValue) {
-            isExpanded.value = false;
-        }
-    },
-);
-
-const onToggleExpanded = () => {
-    isExpanded.value = !isExpanded.value;
-};
 </script>
 
 <template>
     <Transition name="compact-slide">
         <div
             v-if="showIf"
-            class="compact-trip-progress"
-            :class="{ expanded: isExpanded }"
-            v-on:click="onToggleExpanded"
+            class="route-warning"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
         >
-            <Icon v-if="isExpanded" name="lucide:chevron-right" size="22" />
-            <Icon v-else name="lucide:chevron-left" size="22" />
-
             <div class="warning-message">
-                <Icon name="lucide:triangle-alert" size="22" />
+                <Icon name="lucide:triangle-alert" size="22" aria-hidden="true" />
 
-                <div class="text-content">
+                <div class="text-content" tabindex="0" :aria-label="text">
                     <span class="text-nowrap">{{ text }}</span>
                 </div>
             </div>

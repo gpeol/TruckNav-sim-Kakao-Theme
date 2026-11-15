@@ -220,6 +220,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, [role='button']
 /* The preview has its own back, waypoint and settings controls. */
 :root body .map-ui-layer.has-route-preview .left-buttons { display: none; }
 @media (orientation: portrait), (max-width: 639px) {
+    :root body .map-ui-layer.has-route-preview .warnings { top: calc(max(var(--top-bar-height), 56px) + 76px); right: max(72px, calc(env(safe-area-inset-right) + 72px)); }
     :root body .map-ui-layer.has-route-preview .hud-buttons { top: calc(var(--top-bar-height) + 78px); bottom: auto; }
 }
 /* The two metrics are primary text; only their labels use the muted color. */
@@ -269,8 +270,168 @@ button:focus-visible, select:focus-visible, input:focus-visible, [role='button']
         .speed-limit { font-size: 2.6rem; }
     }
     :root body .map-ui-layer.has-guidance {
-        .hud-buttons .option-btn { min-width: 40px; min-height: 40px; width: 40px; height: 40px; }
-        .hud-buttons { gap: 5px; }
+        .hud-buttons .option-btn { min-width: 48px; min-height: 48px; width: 48px; height: 48px; }
+        .hud-buttons { gap: 5px; display: grid; grid-template-columns: repeat(4, 48px); }
+        .hud-buttons:has(.add-stop-hud-btn) { grid-template-columns: repeat(5, 48px); }
     }
     :root body .map-ui-layer:not(.has-route-preview):has(.speed-limit-sign.square) .truck-info { width: 54px; }
+}
+
+/* A reserved top banner lane keeps status notices out of navigation controls. */
+:root body .map-ui-layer { --warning-offset: 0px; }
+:root body .map-ui-layer:has(.warnings .route-warning) { --warning-offset: 52px; }
+:root body .map-ui-layer:has(.warnings .route-warning ~ .route-warning) { --warning-offset: 104px; }
+:root body .map-ui-layer .warnings {
+    top: calc(max(var(--top-bar-height), 56px) + 8px);
+    bottom: auto;
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    max-width: none;
+    gap: 8px;
+    z-index: 3;
+}
+@media (orientation: portrait), (max-width: 639px) {
+    :root body .map-ui-layer.has-guidance:has(.route-warning) {
+        .card { top: calc(max(var(--top-bar-height), 56px) + 12px + var(--warning-offset)); }
+        .truck-info { top: calc(max(var(--top-bar-height), 56px) + 176px + var(--warning-offset)); }
+        .speed-limit-sign { top: calc(max(var(--top-bar-height), 56px) + 254px + var(--warning-offset)); }
+    }
+}
+@media (orientation: landscape) and (min-width: 640px) {
+    :root body .map-ui-layer .warnings { right: max(90px, calc(env(safe-area-inset-right) + 90px)); }
+    :root body .map-ui-layer.has-guidance .warnings,
+    :root body .map-ui-layer.has-route-preview .warnings { left: calc(max(16px, env(safe-area-inset-left)) + min(43vw, 440px) + 12px); }
+}
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 380px) {
+    :root body .map-ui-layer {
+        .card { top: calc(var(--top-bar-height) + 8px); min-height: 0; }
+        .card .primary-turn { min-height: 58px; padding: 6px 12px; gap: 8px; }
+        .card .primary-turn .icon-wrapper { flex-basis: 38px; width: 38px; height: 38px; }
+        .card .turn-info p:first-child { font-size: 3rem; }
+        .card .turn-info p:last-child { font-size: 1.2rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card .secondary-turn { min-height: 28px; padding: 2px 10px; font-size: 1.6rem; }
+        .card .secondary-turn .icon-wrapper { flex-basis: 24px; width: 24px; height: 24px; }
+        .hud-buttons { display: grid; grid-template-columns: repeat(4, 48px); gap: 5px; }
+        .hud-buttons:has(.add-stop-hud-btn) { grid-template-columns: repeat(5, 48px); }
+        .hud-buttons .option-btn { width: 48px; height: 48px; min-width: 48px; min-height: 48px; }
+        .warnings { right: max(105px, calc(env(safe-area-inset-right) + 105px)); }
+    }
+    :root body .map-ui-layer:has(.hud-buttons .add-stop-hud-btn) .warnings { right: max(150px, calc(env(safe-area-inset-right) + 150px)); }
+}
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 340px) {
+    :root body .map-ui-layer:not(.has-route-preview) {
+        .truck-info { top: calc(var(--top-bar-height) + 4px); width: 42px; }
+        .truck-speed-div { height: 42px; }
+        .truck-speed { font-size: 3.2rem; }
+        .km-h { font-size: 1rem; }
+        .speed-limit-sign { top: calc(var(--top-bar-height) + 48px); }
+        .speed-limit-sign.circle, .speed-limit-sign.square { width: 42px; height: 42px; }
+        .speed-limit { font-size: 2.1rem; }
+    }
+    :root body .map-ui-layer:not(.has-route-preview):has(.speed-limit-sign.square) .truck-info { width: 42px; }
+}
+
+/* Free driving reuses the existing telemetry DOM, units and visibility settings. */
+:root body .map-ui-layer.is-free-driving .gas-sleep-time { position: fixed; z-index: 20; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 72px); width: max-content; max-width: calc(100% - max(12px, env(safe-area-inset-left)) - max(12px, env(safe-area-inset-right))); right: auto; min-height: 36px; height: auto; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 6px; padding: 0; background: transparent; color: var(--text-primary); box-shadow: none; }
+:root body .map-ui-layer.is-free-driving .gas-sleep-time .gas-sleep { display: contents; }
+:root body .map-ui-layer.is-free-driving .gas-sleep-time :is(.fuel-amount, .sleep-div, .game-time) { min-height: 36px; padding: 6px 9px; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-hud); white-space: nowrap; }
+:root body .map-ui-layer.is-free-driving .gas-sleep-time .game-time { min-width: 0; font-size: 1.3rem; }
+:root body .map-ui-layer.is-free-driving .gas-sleep-time .fuel-amount, :root body .map-ui-layer.is-free-driving .gas-sleep-time .sleep-div { font-size: 1.3rem; }
+@media (orientation: portrait) {
+    :root body .map-ui-layer.is-free-driving .hud-buttons { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 72px); }
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time { left: 50%; transform: translateX(-50%); width: max-content; max-width: min(420px, calc(100% - 2 * max(60px, env(safe-area-inset-left), env(safe-area-inset-right)))); justify-content: center; }
+}
+@media (orientation: portrait) and (max-width: 360px) {
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time { gap: 4px; }
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time :is(.fuel-amount, .sleep-div, .game-time) { padding-left: 5px; padding-right: 5px; font-size: 1.1rem; }
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time :is(.fuel-amount, .sleep-div) .iconify { width: 18px; height: 18px; }
+}
+@media (orientation: landscape) and (min-width: 640px) {
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time { left: max(16px, env(safe-area-inset-left)); right: auto; max-width: min(43vw, 440px); }
+    :root body .map-ui-layer.is-free-driving:not(.has-route-preview) .warnings { left: max(16px, env(safe-area-inset-left)); right: auto; width: min(43vw, 440px); max-height: calc(100dvh - max(var(--top-bar-height), 56px) - max(12px, env(safe-area-inset-bottom)) - 132px); overflow-y: auto; overscroll-behavior: contain; }
+}
+
+/* Preserve the existing narrow landscape fallback. */
+@media (orientation: landscape) and (max-width: 639px) {
+    :root body .map-ui-layer.is-free-driving .hud-buttons { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 72px); }
+    :root body .map-ui-layer.is-free-driving:has(.gas-sleep-time) .hud-buttons { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 132px); }
+}
+
+:root body .map-ui-layer.is-free-driving .free-drive-location { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); max-width: 100%; display: flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 20px; background: var(--surface); color: var(--text-muted); font-size: 1.25rem; font-weight: 700; white-space: nowrap; box-shadow: var(--shadow-hud); }
+:root body .map-ui-layer.is-free-driving .free-drive-location > span { overflow: hidden; text-overflow: ellipsis; }
+
+@media (orientation: landscape) and (min-width: 640px) {
+    :root body .map-ui-layer.is-free-driving:not(.has-route-preview):has(.free-drive-location) .warnings { max-height: calc(100dvh - max(var(--top-bar-height), 56px) - max(12px, env(safe-area-inset-bottom)) - 150px); }
+    :root body .map-ui-layer.is-free-driving .free-drive-location { font-size: 1.1rem; padding: 3px 8px; bottom: calc(100% + 6px); }
+}
+
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 300px) {
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time { min-height: 28px; }
+    :root body .map-ui-layer.is-free-driving .gas-sleep-time :is(.fuel-amount, .sleep-div, .game-time) { min-height: 28px; padding-top: 3px; padding-bottom: 3px; }
+    :root body .map-ui-layer.is-free-driving:not(.has-route-preview):has(.free-drive-location) .warnings { max-height: calc(100dvh - max(var(--top-bar-height), 56px) - max(12px, env(safe-area-inset-bottom)) - 139px); }
+}
+
+/* Safe driving has no header; speed and bottom telemetry keep their own layout. */
+:root body .map-ui-layer.is-free-driving .game-information { background: transparent; border: 0; box-shadow: none; pointer-events: none; }
+:root body .map-ui-layer.is-free-driving:not(.has-route-preview) .warnings { top: calc(env(safe-area-inset-top, 0px) + 12px); }
+:root body .map-ui-layer.is-free-driving .notification-container { top: calc(env(safe-area-inset-top, 0px) + 12px + var(--warning-offset)); }
+
+/* Guidance telemetry shares the measured summary stack; preview keeps its header. */
+:root body .map-ui-layer.is-route-guidance {
+    .gas-sleep-time { position: fixed; z-index: 20; left: 50%; transform: translateX(-50%); right: auto; bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--trip-summary-height, 112px) + 8px); width: max-content; max-width: min(420px, calc(100% - 2 * max(60px, env(safe-area-inset-left), env(safe-area-inset-right)))); min-height: 36px; height: auto; display: flex; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center; gap: 6px; padding: 0; background: transparent; box-shadow: none; color: var(--text-primary); }
+    .gas-sleep-time .gas-sleep { display: contents; }
+    .gas-sleep-time :is(.fuel-amount, .sleep-div, .game-time) { min-height: 36px; padding: 6px 9px; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-hud); white-space: nowrap; font-size: 1.3rem; }
+    .gas-sleep-time .game-time { min-width: 0; }
+    .trip-summary:not(.preview) .trip-destination { top: auto; bottom: calc(100% + 8px + var(--trip-telemetry-height, 0px) + 8px); }
+}
+@media (orientation: portrait) and (max-width: 360px) {
+    :root body .map-ui-layer.is-route-guidance {
+        .gas-sleep-time { gap: 4px; }
+        .gas-sleep-time :is(.fuel-amount, .sleep-div, .game-time) { padding-left: 5px; padding-right: 5px; font-size: 1.1rem; }
+        .gas-sleep-time :is(.fuel-amount, .sleep-div) .iconify { width: 18px; height: 18px; }
+    }
+}
+@media (orientation: landscape) and (min-width: 640px) {
+    :root body .map-ui-layer.is-route-guidance .gas-sleep-time { left: max(16px, env(safe-area-inset-left)); transform: none; max-width: min(43vw, 440px); }
+}
+
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 320px) {
+    :root body .map-ui-layer.is-route-guidance {
+        .gas-sleep-time { left: calc(max(16px, env(safe-area-inset-left)) + min(43vw, 440px) + 12px); right: calc(max(10px, env(safe-area-inset-right)) + 207px + 12px); width: auto; max-width: none; bottom: max(12px, env(safe-area-inset-bottom)); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 4px; }
+        .gas-sleep-time :is(.fuel-amount, .sleep-div, .game-time) { min-height: 28px; padding: 3px 4px; font-size: 1.1rem; text-align: center; }
+        .gas-sleep-time :is(.fuel-amount, .sleep-div) .iconify { width: 18px; height: 18px; }
+        .gas-sleep-time .liters { font-size: 1.1rem; }
+        .trip-summary:not(.preview) .trip-destination { top: 2px; bottom: auto; }
+    }
+    :root body .map-ui-layer.is-route-guidance:has(.hud-buttons .add-stop-hud-btn) .gas-sleep-time { right: calc(max(10px, env(safe-area-inset-right)) + 260px + 12px); }
+}
+
+@media (orientation: portrait) and (max-height: 650px) {
+    :root body .map-ui-layer.is-route-guidance .gas-sleep-time { left: max(95px, calc(env(safe-area-inset-left) + 95px)); transform: none; max-width: calc(100% - max(95px, calc(env(safe-area-inset-left) + 95px)) - max(60px, calc(env(safe-area-inset-right) + 60px))); }
+}
+
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 320px) {
+    :root body .map-ui-layer.is-route-guidance .warnings { max-height: calc(100dvh - max(12px, env(safe-area-inset-bottom)) - var(--trip-telemetry-height, 0px) - max(var(--top-bar-height), 56px) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+}
+
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 320px) {
+    :root body .map-ui-layer.is-route-guidance:has(.hud-buttons .add-stop-hud-btn) {
+        .hud-buttons { grid-template-columns: repeat(3, 48px); }
+        .hud-buttons > :nth-child(3) { grid-row: 2; grid-column: 1; }
+        .hud-buttons > :nth-child(4) { grid-row: 2; grid-column: 2; }
+        .hud-buttons > :nth-child(5) { grid-row: 2; grid-column: 3; }
+        .gas-sleep-time { right: calc(max(10px, env(safe-area-inset-right)) + 154px + 12px); }
+        .warnings { right: max(176px, calc(env(safe-area-inset-right) + 176px)); }
+    }
+}
+
+/* Keep the warning-shifted card clear of the fixed HUD column on narrow phones. */
+@media (orientation: portrait) and (max-width: 360px) {
+    :root body .map-ui-layer.is-route-guidance:has(.route-warning) {
+        .card { right: max(72px, calc(env(safe-area-inset-right) + 72px)); width: auto; }
+        .card .primary-turn { padding: 12px; gap: 10px; }
+        .card .primary-turn .icon-wrapper { flex-basis: 40px; width: 40px; height: 40px; }
+        .card .turn-info p:first-child { font-size: 3rem; }
+        .card .turn-info p:last-child { font-size: 1.3rem; }
+    }
 }

@@ -1,5 +1,13 @@
 {
-    "traffic": { "title": "TruckersMP-Verkehr (geschätzt)", "description": "Schätzt Routenabschnitte mit mehreren kaum fahrenden Fahrzeugen. Standort und Route werden nicht gesendet.", "choose": "Server laden", "off": "Aus", "waiting": "Fahrzeuge werden beobachtet. Dies kann eine Minute dauern.", "ready": "Verkehrsschätzung ist aktiv.", "unavailable": "Verkehrsdaten sind nicht verfügbar." },
+    "traffic": {
+        "title": "TruckersMP-Verkehr (geschätzt)",
+        "description": "Schätzt Routenabschnitte mit mehreren kaum fahrenden Fahrzeugen. Standort und Route werden nicht gesendet.",
+        "choose": "Server laden",
+        "off": "Aus",
+        "waiting": "Fahrzeuge werden beobachtet. Dies kann eine Minute dauern.",
+        "ready": "Verkehrsschätzung ist aktiv.",
+        "unavailable": "Verkehrsdaten sind nicht verfügbar."
+    },
     "trafficUnsupported": "Nur mit der Standardkarte von ETS2 verfügbar.",
     "common": {
         "back": "Zurück",
@@ -177,7 +185,9 @@
         "arrivalGame": "Ankunft im Spiel",
         "arrivalReal": "Voraussichtliche Ankunft",
         "remaining": "verbleibend",
-        "progress": "Routenfortschritt"
+        "progress": "Routenfortschritt",
+        "endSafeDriving": "Freie Fahrt beenden",
+        "safeDrivingMenu": "Menü für freie Fahrt"
     },
     "directions": {
         "depart": "Head on route",

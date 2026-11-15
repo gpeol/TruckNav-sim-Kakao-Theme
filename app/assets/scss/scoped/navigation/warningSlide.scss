@@ -1,49 +1,5 @@
-.compact-trip-progress {
-    padding: 4px 14px 4px 6px;
-
-    cursor: pointer;
-    display: flex;
-    gap: 0.8rem;
-    align-items: center;
-    justify-content: space-between;
-
-    font-size: 1.5rem;
-    color: $primaryColor;
-
-    border: 1.5px solid $primaryColor;
-    border-right: none;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-
-    background-color: $warning-color;
-    z-index: 999;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
-    .toggle-icon {
-        transition: transform 0.3s ease;
-    }
-
-    .text-content {
-        max-width: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-
-        .text-nowrap {
-            white-space: nowrap;
-        }
-    }
-
-    &.expanded {
-        .text-content {
-            max-width: 300px;
-            opacity: 1;
-        }
-    }
-}
-
-.warning-message {
-    display: flex;
-    gap: 0.8rem;
-    align-items: center;
-}
+.route-warning { display: flex; align-items: center; width: 100%; height: 44px; flex: 0 0 44px; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--surface); color: var(--text-primary); font-size: 1.3rem; box-shadow: var(--shadow-hud); }
+.warning-message { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.warning-message > :first-child { flex: 0 0 22px; color: $warning-color; }
+.text-content { min-width: 0; flex: 1; max-height: 28px; overflow-y: auto; overscroll-behavior: contain; line-height: 1.25; }
+.text-nowrap { display: block; white-space: normal; overflow-wrap: anywhere; }

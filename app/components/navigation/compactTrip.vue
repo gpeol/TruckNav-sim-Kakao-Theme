@@ -40,7 +40,12 @@ const summaryLabel = computed(() => [
 <template>
     <button type="button" class="trip-summary" :aria-label="summaryLabel" aria-expanded="false" aria-controls="navigation-actions">
         <span v-if="locationName" class="trip-destination" aria-hidden="true">
-            <Icon name="lucide:map-pin" size="15" /> <span>{{ locationKind }} · {{ locationName }}</span>
+            <Icon v-if="showingCurrent" name="lucide:map-pin" size="15" />
+            <svg v-else class="destination-flag" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 21V4h14v10H5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5 4h3.5v3.33H5zm7 0h3.5v3.33H12zM8.5 7.33H12v3.34H8.5zm7 0H19v3.34h-3.5zM5 10.67h3.5V14H5zm7 0h3.5V14H12z" fill="currentColor" />
+            </svg>
+            <span>{{ locationName }}</span>
         </span>
         <span class="trip-handle" aria-hidden="true"></span>
         <Icon name="lucide:route" class="trip-route-icon" size="25" aria-hidden="true" />
